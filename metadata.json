@@ -1,0 +1,7 @@
+{
+  "name": "Social Thrift",
+  "description": "A thrift and upcycling platform featuring an AI Lab for style recommendations, a digital wardrobe, and a collaborative outfit styler.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

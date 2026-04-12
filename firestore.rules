@@ -1,0 +1,166 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*") || url.matches("^data:image/.*"));
+    }
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "ortizaliah88@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'displayName', 'tier']) &&
+             data.uid == request.auth.uid &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             (!('displayNameLower' in data) || (data.displayNameLower is string && data.displayNameLower.size() < 100)) &&
+             data.tier in ['basic', 'premium'];
+    }
+
+    function isValidGarment(data) {
+      return hasRequiredFields(['ownerId', 'imageUrl', 'category']) &&
+             data.ownerId == request.auth.uid &&
+             isValidUrl(data.imageUrl) &&
+             data.category is string &&
+             (!('tags' in data) || data.tags is list);
+    }
+
+    function isValidOutfit(data) {
+      return hasRequiredFields(['authorId', 'items', 'isPublic']) &&
+             data.authorId == request.auth.uid &&
+             data.items is list &&
+             data.isPublic is bool;
+    }
+
+    function isValidSubscriber(data) {
+      return hasRequiredFields(['email', 'subscribedAt', 'active']) &&
+             isValidEmail(data.email) &&
+             data.email.size() < 256 &&
+             data.subscribedAt is timestamp &&
+             data.active is bool;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.tier == resource.data.tier || request.resource.data.tier == 'premium' || isAdmin());
+    }
+
+    // Garments
+    match /garments/{garmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidGarment(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.ownerId == request.auth.uid && isValidGarment(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Outfits
+    match /outfits/{outfitId} {
+      allow read: if isAuthenticated() && (
+        resource.data.isPublic == true || 
+        resource.data.authorId == request.auth.uid || 
+        outfitId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('favorites', [])
+      );
+      allow create: if isAuthenticated() && isValidOutfit(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid && isValidOutfit(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+        allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/outfits/$(outfitId)).data.authorId == request.auth.uid);
+      }
+    }
+
+    // Listings
+    match /listings/{listingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.sellerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.sellerId == request.auth.uid;
+    }
+
+    // Tutorials
+    match /tutorials/{tutorialId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+        allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+        allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/tutorials/$(tutorialId)).data.authorId == request.auth.uid);
+      }
+    }
+
+    // Tutorial Outputs (Community Results)
+    match /tutorial_outputs/{outputId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // Saved Recommendations
+    match /saved_recommendations/{recommendationId} {
+      allow read: if isAuthenticated() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /follows/{followId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.followerId == request.auth.uid;
+      allow delete: if isAuthenticated() && request.resource.data.followerId == request.auth.uid;
+    }
+
+    // Newsletter subscribers
+    match /subscribers/{subscriberId} {
+      // Allow authenticated users to check if they are subscribed
+      allow read: if isAuthenticated();
+      // Allow authenticated users to subscribe
+      allow create: if isAuthenticated() && isValidSubscriber(request.resource.data);
+      // Allow authenticated users to unsubscribe
+      allow delete: if isAuthenticated();
+    }
+  }
+}
