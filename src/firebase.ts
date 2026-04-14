@@ -1,3 +1,4 @@
+// firebase ini
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -18,6 +19,7 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
+// crud op enum
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -27,6 +29,7 @@ export enum OperationType {
   WRITE = 'write',
 }
 
+// error handling
 export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;

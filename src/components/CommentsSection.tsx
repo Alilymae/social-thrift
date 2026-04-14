@@ -118,16 +118,16 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[600px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-black/5">
-      <div className="p-6 border-b border-black/5 flex items-center justify-between bg-zinc-50/50">
+    <div className="flex flex-col h-full max-h-[600px] bg-card rounded-3xl overflow-hidden shadow-2xl border border-border">
+      <div className="p-6 border-b border-border flex items-center justify-between bg-card-hover/50">
         <div className="flex items-center gap-2">
           <MessageSquare className="text-emerald-500" size={20} />
-          <h3 className="font-bold text-lg">Comments ({comments.length})</h3>
+          <h3 className="font-bold text-lg text-text">Comments ({comments.length})</h3>
         </div>
         {onClose && (
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-black/5 rounded-full transition-colors"
+            className="p-2 hover:bg-card-hover rounded-full transition-colors text-text"
           >
             <X size={20} />
           </button>
@@ -150,24 +150,24 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
               >
                 <img 
                   src={comment.authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.authorId}`} 
-                  className="w-10 h-10 rounded-full border border-black/5 flex-shrink-0" 
+                  className="w-10 h-10 rounded-full border border-border flex-shrink-0" 
                   alt={comment.authorName} 
                 />
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm">{comment.authorName}</p>
+                    <p className="font-bold text-sm text-text">{comment.authorName}</p>
                     {currentUser?.uid === comment.authorId && (
                       <button 
                         onClick={() => handleDelete(comment.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-text-muted hover:text-red-500 transition-all"
                         title="Delete comment"
                       >
                         <Trash2 size={14} />
                       </button>
                     )}
                   </div>
-                  <p className="text-zinc-600 text-sm leading-relaxed">{comment.text}</p>
-                  <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
+                  <p className="text-text-muted text-sm leading-relaxed">{comment.text}</p>
+                  <p className="text-[10px] text-text-muted uppercase tracking-wider font-medium">
                     {comment.createdAt?.toDate ? new Date(comment.createdAt.toDate()).toLocaleDateString() : 'Just now'}
                   </p>
                 </div>
@@ -175,21 +175,21 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-400 space-y-2">
+          <div className="flex flex-col items-center justify-center h-full text-text-muted space-y-2">
             <MessageSquare size={48} className="opacity-10" />
             <p className="text-sm">No comments yet. Start the conversation!</p>
           </div>
         )}
       </div>
 
-      <div className="p-6 border-t border-black/5 bg-zinc-50/50">
+      <div className="p-6 border-t border-border bg-card-hover/50">
         <form onSubmit={handleSubmit} className="relative">
           <input
             type="text"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
-            className="w-full pl-6 pr-14 py-4 bg-white border border-black/5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm"
+            className="w-full pl-6 pr-14 py-4 bg-card border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-sm text-text"
           />
           <button
             type="submit"

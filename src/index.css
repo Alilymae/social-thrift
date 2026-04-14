@@ -5,12 +5,18 @@
   src: url("assets/fonts/ashford-bold.otf") format("truetype");
   font-weight: bold;
 }
+@font-face {
+  font-family: "Maleah";
+  src: url("assets/fonts/Maleah-Regular.otf") format("truetype");
+  font-weight: bold;
+}
 
 @theme {
   --font-heading: "Tan-Ashford-Bold", serif; 
   --font-body: "Scheherazade New", serif;
   --font-accent: "Homemade Apple", cursive; /* I think this is better than maleah */
   --font-complementary: "Playfair Display", serif;
+  --font-alt: "Maleah", cursive;
 
   --color-primary: var(--primary);
   --color-pink: #FFACC1;
@@ -45,6 +51,26 @@
   --card: #2D2F36;
   --sidebar-bg: #2D2F36;
   --sidebar-icon: #FFBD59;
+}
+
+.retro-shadow {
+  box-shadow: 7px 7px 0px #000;
+}
+
+.retro-shadow-pink {
+  box-shadow: 7px 7px 0px #ff6b9d; 
+}
+
+.retro-shadow-primary {
+  box-shadow: 7px 7px 0px #024A34; 
+}
+
+.retro-shadow-dark-primary {
+  box-shadow: 7px 7px 0px #FFBD59; 
+}
+
+.retro-shadow-text {
+  box-shadow: 7px 7px 0px #383A43; 
 }
 
 @layer base {

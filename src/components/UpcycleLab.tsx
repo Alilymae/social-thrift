@@ -265,7 +265,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               placeholder="Search by tag..."
               value={searchTag}
               onChange={(e) => setSearchTag(e.target.value)}
-              className="w-full bg-white border border-zinc-200 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
           <button 
@@ -292,7 +292,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               layout
               whileHover={{ y: -8 }}
               key={tutorial.id}
-              className="group bg-white rounded-[2.5rem] border border-black/5 overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer"
+              className="group bg-card rounded-[2.5rem] border border-border overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer"
               onClick={() => setSelectedTutorial(tutorial)}
             >
               <div className="aspect-video relative overflow-hidden bg-zinc-100">
@@ -345,12 +345,12 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               </div>
               <div className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-bold text-lg text-zinc-900 group-hover:text-primary transition-colors line-clamp-1">{tutorial.title}</h3>
-                  <p className="text-xs text-zinc-400 flex items-center gap-1 mt-1">
-                    by <span className="font-medium text-zinc-600">{tutorial.authorName}</span>
+                  <h3 className="font-bold text-lg text-text group-hover:text-primary transition-colors line-clamp-1">{tutorial.title}</h3>
+                  <p className="text-xs text-text-muted flex items-center gap-1 mt-1">
+                    by <span className="font-medium text-text">{tutorial.authorName}</span>
                   </p>
                 </div>
-                <p className="text-sm text-zinc-500 line-clamp-2 leading-relaxed">{tutorial.description}</p>
+                <p className="text-sm text-text-muted line-clamp-2 leading-relaxed">{tutorial.description}</p>
                 <div className="flex items-center justify-between pt-4 border-t border-zinc-50">
                   <button 
                     onClick={(e) => {
@@ -366,9 +366,9 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                         <UserIcon size={16} />
                       )}
                     </div>
-                    <span className="text-xs font-medium text-zinc-600">{tutorial.authorName}</span>
+                    <span className="text-xs font-medium text-text">{tutorial.authorName}</span>
                   </button>
-                  <div className="flex items-center gap-4 text-xs font-bold text-zinc-400">
+                  <div className="flex items-center gap-4 text-xs font-bold text-text-muted">
                     <span className="flex items-center gap-1"><Heart size={14} /> {tutorial.likesCount || 0}</span>
                     <span className="flex items-center gap-1"><MessageSquare size={14} /> {tutorial.commentsCount || 0}</span>
                   </div>
@@ -381,12 +381,12 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
           ))
         ) : (
           <div className="col-span-full py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mx-auto text-zinc-200">
+            <div className="w-20 h-20 bg-card-hover rounded-full flex items-center justify-center mx-auto text-text-muted">
               <Scissors size={40} />
             </div>
             <div className="space-y-1">
-              <p className="text-xl font-bold text-zinc-900">No tutorials found</p>
-              <p className="text-zinc-400">Be the first to share your upcycling wisdom!</p>
+              <p className="text-xl font-bold text-text">No tutorials found</p>
+              <p className="text-text-muted">Be the first to share your upcycling wisdom!</p>
             </div>
           </div>
         )}
@@ -405,7 +405,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
+              className="bg-card rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-green-support" />
@@ -419,45 +419,45 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               <form onSubmit={handlePostTutorial} className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Title</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Title</label>
                     <input 
                       required
                       type="text"
                       value={newTutorial.title}
                       onChange={(e) => setNewTutorial({ ...newTutorial, title: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="e.g., How to turn jeans into a bag"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Video/Image URL</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Video/Image URL</label>
                     <input 
                       required
                       type="url"
                       value={newTutorial.videoUrl}
                       onChange={(e) => setNewTutorial({ ...newTutorial, videoUrl: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="YouTube link or image URL"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Tags (comma separated)</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Tags (comma separated)</label>
                     <input 
                       required
                       type="text"
                       value={newTutorial.tags}
                       onChange={(e) => setNewTutorial({ ...newTutorial, tags: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                       placeholder="denim, bag, beginner"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Description</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Description</label>
                     <textarea 
                       required
                       value={newTutorial.description}
                       onChange={(e) => setNewTutorial({ ...newTutorial, description: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px]"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px]"
                       placeholder="Briefly explain what this tutorial covers..."
                     />
                   </div>
@@ -488,14 +488,14 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               initial={{ scale: 0.9, y: 40 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 40 }}
-              className="bg-white rounded-[3rem] max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl relative flex flex-col lg:flex-row"
+              className="bg-card rounded-[3rem] max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl relative flex flex-col lg:flex-row"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="lg:w-3/5 bg-black flex items-center justify-center relative">
                 {renderVideo(selectedTutorial.videoUrl)}
                 <button 
                   onClick={() => setSelectedTutorial(null)}
-                  className="absolute top-6 left-6 p-3 bg-white/90 text-zinc-900 rounded-full backdrop-blur-md shadow-lg lg:hidden"
+                  className="absolute top-6 left-6 p-3 bg-card/90 text-text rounded-full backdrop-blur-md shadow-lg lg:hidden"
                 >
                   <X size={20} />
                 </button>
@@ -505,7 +505,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex flex-wrap gap-2">
                     {selectedTutorial.tags.map((tag, i) => (
-                      <span key={`${tag}-${i}`} className="bg-zinc-100 text-zinc-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                      <span key={`${tag}-${i}`} className="bg-card-hover text-text-muted px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                         {tag}
                       </span>
                     ))}
@@ -527,12 +527,12 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                   </div>
 
                   <div className="prose prose-zinc prose-sm">
-                    <p className="text-zinc-600 leading-relaxed">{selectedTutorial.description}</p>
+                    <p className="text-text-muted leading-relaxed">{selectedTutorial.description}</p>
                   </div>
 
                   <div className="space-y-4 pt-6 border-t border-zinc-100">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-zinc-900">Community Results</h4>
+                      <h4 className="font-bold text-text">Community Results</h4>
                       <button 
                         onClick={() => setViewingComments(selectedTutorial.id)}
                         className="text-xs font-bold text-primary flex items-center gap-1"
@@ -555,7 +555,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                           )}
                         </div>
                       ))}
-                      <label className="aspect-square rounded-xl border-2 border-dashed border-zinc-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors group">
+                      <label className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/30 transition-colors group">
                         {isUploadingOutput ? <RefreshCw className="animate-spin text-primary" size={20} /> : <Plus size={20} className="text-zinc-300 group-hover:text-primary transition-colors" />}
                         <input 
                           type="file" 
@@ -584,7 +584,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                     onClick={(e) => handleToggleLike(e, selectedTutorial.id)}
                     className={cn(
                       "w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all",
-                      likedTutorials.includes(selectedTutorial.id) ? "bg-red-500 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                      likedTutorials.includes(selectedTutorial.id) ? "bg-red-500 text-white" : "bg-card-hover text-text-muted hover:bg-card"
                     )}
                   >
                     <Heart size={20} fill={likedTutorials.includes(selectedTutorial.id) ? "currentColor" : "none"} />
@@ -626,7 +626,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               <a 
                 href={fullscreenImage} 
                 download="upcycle-result.png"
-                className="bg-white text-zinc-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-zinc-100 transition-colors shadow-xl"
+                className="bg-card text-text px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-card-hover transition-colors shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Download size={20} />

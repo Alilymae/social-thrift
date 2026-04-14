@@ -52,7 +52,7 @@ const fadeIn = {
 const StatPill = ({ value, label }: { value: number; label: string }) => (
   <motion.div
     variants={fadeUp}
-    className="flex flex-col items-center gap-0.5 px-4 py-3 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors cursor-default"
+    className="flex flex-col items-center gap-0.5 px-4 py-3 rounded-2xl bg-card-hover hover:bg-card transition-colors cursor-default"
   >
     <span className="text-xl font-bold text-text tabular-nums">{value}</span>
     <span className="text-[10px] text-text/40 uppercase tracking-widest font-medium whitespace-nowrap">{label}</span>
@@ -64,12 +64,12 @@ const EmptyState = ({ icon: Icon, message }: { icon: React.ElementType; message:
   <motion.div
     initial={{ opacity: 0, scale: 0.96 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="py-20 flex flex-col items-center gap-3 bg-bg rounded-3xl border border-dashed border-primary/10"
+    className="py-20 flex flex-col items-center gap-3 bg-bg rounded-3xl border border-dashed border-border"
   >
-    <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center">
-      <Icon size={20} className="text-text/30" />
+    <div className="w-12 h-12 rounded-2xl bg-card-hover flex items-center justify-center">
+      <Icon size={20} className="text-text-muted" />
     </div>
-    <p className="text-text/40 text-sm italic">{message}</p>
+    <p className="text-text-muted text-sm italic">{message}</p>
   </motion.div>
 );
 
@@ -348,7 +348,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5 pb-16">
 
       {/* ── HERO HEADER ── */}
-      <motion.section variants={fadeIn} className="relative rounded-3xl overflow-hidden border border-primary/5 shadow-sm bg-card">
+      <motion.section variants={fadeIn} className="relative rounded-3xl overflow-hidden border border-border shadow-sm bg-card">
 
         {/* Cover */}
         <div className="relative h-52 md:h-64 bg-bg overflow-hidden">
@@ -370,7 +370,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                                     radial-gradient(ellipse at 75% 30%, var(--color-orange, #f97316) 0%, transparent 50%)`
                 }}
               />
-              <ImageIcon size={40} className="text-text/20 relative z-10" />
+              <ImageIcon size={40} className="text-text-muted relative z-10" />
             </div>
           )}
 
@@ -448,7 +448,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                       {profile?.displayName || user.displayName}
                     </motion.h2>
                     {isOwner && (
-                      <button onClick={() => setIsEditingName(true)} className="p-1 text-text/30 hover:text-primary transition-colors">
+                      <button onClick={() => setIsEditingName(true)} className="p-1 text-text-muted hover:text-primary transition-colors">
                         <Edit2 size={14} />
                       </button>
                     )}
@@ -506,7 +506,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                 )}
               </div>
 
-              <motion.p variants={fadeUp} className="text-text/40 text-xs font-medium flex items-center gap-1 mb-3">
+              <motion.p variants={fadeUp} className="text-text-muted text-xs font-medium flex items-center gap-1 mb-3">
                 <Calendar size={12} />
                 Member since {profile?.createdAt
                   ? ((profile.createdAt as any).toDate?.()?.toLocaleDateString() || new Date(profile.createdAt as any).toLocaleDateString())
@@ -530,11 +530,11 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   </div>
                 ) : (
                   <div className="flex items-start gap-2 max-w-lg">
-                    <p className="text-text/60 text-sm italic leading-relaxed">
+                    <p className="text-text-muted text-sm italic leading-relaxed">
                       {bio || (isOwner ? 'No bio yet — add one to express your style!' : 'No bio yet.')}
                     </p>
                     {isOwner && (
-                      <button onClick={() => setIsEditingBio(true)} className="p-1 text-text/30 hover:text-primary transition-colors flex-shrink-0 mt-0.5">
+                      <button onClick={() => setIsEditingBio(true)} className="p-1 text-text-muted hover:text-primary transition-colors flex-shrink-0 mt-0.5">
                         <Edit2 size={13} />
                       </button>
                     )}
@@ -573,20 +573,20 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
             </div>
             <div>
               <p className="text-xl font-bold text-text tabular-nums">{stat.value}</p>
-              <p className="text-[10px] text-text/40 uppercase tracking-wider leading-tight">{stat.label}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-wider leading-tight">{stat.label}</p>
             </div>
           </motion.div>
         ))}
       </motion.div>
 
       {/* ── TABS ── */}
-      <motion.div variants={fadeUp} className="flex gap-1 bg-bg rounded-2xl p-1 border border-primary/5">
+      <motion.div variants={fadeUp} className="flex gap-1 bg-bg rounded-2xl p-1 border border-border">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`relative flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold transition-colors ${
-              activeTab === tab.id ? 'text-primary' : 'text-text/40 hover:text-text/70'
+              activeTab === tab.id ? 'text-primary' : 'text-text-muted hover:text-text'
             }`}
           >
             {activeTab === tab.id && (
@@ -600,7 +600,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
             <span className="relative z-10 hidden sm:inline">{tab.label}</span>
             {tab.count > 0 && (
               <span className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-text/10 text-text/40'
+                activeTab === tab.id ? 'bg-primary/10 text-primary' : 'bg-card-hover text-text-muted'
               }`}>
                 {tab.count}
               </span>
@@ -630,7 +630,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.035, duration: 0.35 }}
                     whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    className="group aspect-[3/4] rounded-2xl overflow-hidden border border-primary/5 bg-bg relative shadow-sm"
+                    className="group aspect-[3/4] rounded-2xl overflow-hidden border border-border bg-bg relative shadow-sm"
                   >
                     <img src={g.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Garment" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -659,7 +659,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05, duration: 0.35 }}
                   whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                  className="bg-card rounded-2xl p-4 border border-primary/5 flex gap-4 items-center group"
+                  className="bg-card rounded-2xl p-4 border border-border flex gap-4 items-center group"
                 >
                   <div
                     className="w-16 h-16 md:w-20 md:h-20 rounded-xl relative overflow-hidden flex-shrink-0"
@@ -677,7 +677,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-text">Outfit #{outfit.id.slice(-4)}</p>
-                    <p className="text-xs text-text/40 truncate">
+                    <p className="text-xs text-text-muted truncate">
                       {outfit.items.length} items
                       {outfit.createdAt && typeof outfit.createdAt.toDate === 'function'
                         ? ` · ${outfit.createdAt.toDate().toLocaleDateString()}` : ''}
@@ -685,7 +685,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                      outfit.isPublic ? 'bg-primary/10 text-primary' : 'bg-text/5 text-text/40'
+                      outfit.isPublic ? 'bg-primary/10 text-primary' : 'bg-card-hover text-text-muted'
                     }`}>
                       {outfit.isPublic ? <Globe size={10} /> : <Lock size={10} />}
                       {outfit.isPublic ? 'Public' : 'Private'}
@@ -693,7 +693,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     {isOwner && (
                       <button
                         onClick={() => toggleOutfitPrivacy(outfit.id, outfit.isPublic)}
-                        className="text-[10px] font-bold text-text/30 hover:text-primary uppercase tracking-widest transition-colors"
+                        className="text-[10px] font-bold text-text-muted hover:text-primary uppercase tracking-widest transition-colors"
                       >
                         {outfit.isPublic ? 'Make Private' : 'Make Public'}
                       </button>
@@ -723,7 +723,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.06, duration: 0.35 }}
                     whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    className="bg-card rounded-2xl border border-primary/5 overflow-hidden shadow-sm group"
+                    className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm group"
                   >
                     <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: outfit.backgroundColor || 'var(--bg)' }}>
                       <div className="absolute inset-0">
@@ -748,13 +748,13 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                       </div>
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                     </div>
-                    <div className="p-3 flex items-center gap-2 border-t border-primary/5">
+                    <div className="p-3 flex items-center gap-2 border-t border-border">
                       <img
                         src={outfit.authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${outfit.authorId}`}
-                        className="w-5 h-5 rounded-full border border-primary/10"
+                        className="w-5 h-5 rounded-full border border-border"
                         alt="Author"
                       />
-                      <p className="text-[11px] font-bold text-text/70 truncate flex-1">{outfit.authorName}</p>
+                      <p className="text-[11px] font-bold text-text-muted truncate flex-1">{outfit.authorName}</p>
                       <Heart size={11} className="text-red-400 flex-shrink-0" fill="currentColor" />
                     </div>
                   </motion.div>
@@ -786,7 +786,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.06, duration: 0.35 }}
                       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                      className="bg-card rounded-3xl border border-primary/5 overflow-hidden shadow-sm group"
+                      className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm group"
                     >
                       <div
                         className="aspect-video relative overflow-hidden cursor-pointer"

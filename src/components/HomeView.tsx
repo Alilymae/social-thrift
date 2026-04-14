@@ -1,6 +1,8 @@
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
-import { Sparkles, Shirt, Layout, Video, ShoppingBag, Users, ArrowRight, Heart, Star, Quote } from 'lucide-react';
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { Sparkles, Shirt, Layout, Video, ShoppingBag, Users, ArrowRight, Heart, Star, Quote, GemIcon } from "lucide-react";
+import { GeminiIcon } from "../components/Sidebar";
+import logo from "../assets/logo.png";
 
 interface HomeViewProps {
   userName: string;
@@ -20,94 +22,110 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 
+  const GeminiIcon = ({ size = 24, className }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 3L14.5 9.5L21 12L14.5 14.5L12 21L9.5 14.5L3 12L9.5 9.5L12 3Z" />
+  </svg>
+);
+
   const features = [
     {
-      id: 'lab',
-      title: 'AI Style Lab',
-      description: 'Get personalized AI-powered style recommendations based on your wardrobe.',
-      icon: Sparkles,
-      color: 'bg-pink',
-      textColor: 'text-primary'
+      id: "lab",
+      title: "AI Style Lab",
+      description: "Get personalized AI-powered style recommendations based on your wardrobe.",
+      icon: GeminiIcon,
+      color: "bg-pink",
+      textColor: "text-primary"
     },
     {
-      id: 'wardrobe',
-      title: 'Digital Wardrobe',
-      description: 'Upload and organize your clothes to build your digital collection.',
+      id: "wardrobe",
+      title: "Digital Wardrobe",
+      description: "Upload and organize your clothes to build your digital collection.",
       icon: Shirt,
-      color: 'bg-orange',
-      textColor: 'text-primary'
+      color: "bg-orange",
+      textColor: "text-primary"
     },
     {
-      id: 'styler',
-      title: 'Outfit Styler',
-      description: 'Mix and match your items on a collaborative canvas to create perfect looks.',
+      id: "styler",
+      title: "Outfit Styler",
+      description: "Mix and match your items on a collaborative canvas to create perfect looks.",
       icon: Layout,
-      color: 'bg-primary',
-      textColor: 'text-bg'
+      color: "bg-cream-support",
+      textColor: "text-primary"
     },
     {
-      id: 'upcycle',
-      title: 'Upcycle Lab',
-      description: 'Learn how to transform your old clothes with creative tutorials.',
+      id: "upcycle",
+      title: "Upcycle Lab",
+      description: "Learn how to transform your old clothes with creative tutorials.",
       icon: Video,
-      color: 'bg-purple-support',
-      textColor: 'text-bg'
+      color: "bg-purple-support",
+      textColor: "text-bg"
     },
     {
-      id: 'market',
-      title: 'Marketplace',
-      description: 'Buy and sell pre-loved fashion within the conscious community.',
+      id: "market",
+      title: "Marketplace",
+      description: "Buy and sell pre-loved fashion within the conscious community.",
       icon: ShoppingBag,
-      color: 'bg-green-support',
-      textColor: 'text-bg'
+      color: "bg-green-support",
+      textColor: "text-bg"
     },
     {
-      id: 'community',
-      title: 'Community',
-      description: 'Follow other stylists and share your creative outfits.',
+      id: "community",
+      title: "Community",
+      description: "Follow other stylists and share your creative outfits.",
       icon: Users,
-      color: 'bg-lavender-support',
-      textColor: 'text-primary'
+      color: "bg-lavender-support",
+      textColor: "text-primary"
     }
   ];
 
   return (
-    <div ref={containerRef} className="relative min-h-[300vh] bg-transparent transition-colors duration-300">
+    <div ref={containerRef} className="relative min-h-[300vh] min-x-auto bg-transparent transition-colors duration-300">
       {/* Hero Section with Parallax */}
-      <section className="sticky top-0 h-screen flex items-center justify-center overflow-hidden z-10">
-        <motion.div 
+      <section className="sticky top-0 min-h-screen flex items-center justify-center overflow-hidden z-10 -mt-35">
+        <motion.div
           style={{ scale, opacity }}
-          className="relative z-10 text-center space-y-8 px-6"
+          className="relative z-10 text-center space-y-1 px-6"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-pink/20 text-primary border-2 border-primary/10 font-accent text-2xl backdrop-blur-sm"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-pink/30 text-primary border-primary/10 font-accent text-1xl backdrop-blur-sm"
           >
-            <Heart size={24} className="text-pink" fill="currentColor" />
             Hello, {userName}!
           </motion.div>
-          
-          <h1 className="text-6xl md:text-9xl font-heading text-primary leading-none tracking-tighter drop-shadow-sm">
-            SOCIAL <br />
-            <span className="text-orange italic">THRIFT</span>
-          </h1>
-          
-          <p className="text-2xl text-text/70 max-w-2xl mx-auto font-body leading-relaxed">
-            Where vintage charm meets modern AI. <br />
-            Join the <span className="text-primary font-bold">RE:Thriva</span> movement and redefine your style.
+
+          <img
+            src={logo}
+            alt="Social Thrift Logo"
+            className="w-[300px] md:w-[500px] mx-auto drop-shadow-lg"
+          />
+
+          <p className="text-2xl text-primary max-w-2xl mx-auto font-medium leading-relaxed">
+            Your Style. Your Impact. Your Thrift
           </p>
 
-          <div className="flex justify-center gap-6 pt-8">
+          <div className="flex justify-center gap-6 pt-4">
             <button
-              onClick={() => setActiveTab('lab')}
-              className="px-10 py-5 bg-primary text-bg font-heading text-2xl rounded-2xl hover:scale-105 transition-all retro-shadow"
+              onClick={() => setActiveTab("lab")}
+              className="px-10 py-3 bg-primary text-orange font-alt text-2xl rounded-4xl hover:scale-105 transition-all retro-shadow-dark-primary"
             >
               Start Styling
             </button>
             <button
-              onClick={() => setActiveTab('market')}
-              className="px-10 py-5 bg-pink text-primary font-heading text-2xl rounded-2xl hover:scale-105 transition-all shadow-xl"
+              onClick={() => setActiveTab("market")}
+              className="px-10 py-3 bg-pink text-text font-alt text-2xl rounded-4xl hover:scale-105 transition-all retro-shadow-text"
             >
               Shop Now
             </button>
@@ -115,11 +133,11 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
         </motion.div>
 
         {/* Parallax Background Elements */}
-        <motion.div 
+        <motion.div
           style={{ y: y1, rotate }}
           className="absolute top-20 left-10 w-64 h-64 bg-orange/20 rounded-[4rem] blur-3xl -z-10"
         />
-        <motion.div 
+        <motion.div
           style={{ y: y2, rotate: -rotate }}
           className="absolute bottom-20 right-10 w-96 h-96 bg-pink/20 rounded-full blur-3xl -z-10"
         />
@@ -130,12 +148,12 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
         <div className="max-w-7xl mx-auto space-y-24">
           <div className="flex flex-col md:flex-row items-end justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
-              <h2 className="text-5xl md:text-7xl font-heading text-primary">The Creative <br /> Incubator</h2>
-              <p className="text-xl text-text/60 leading-relaxed">
-                We've built a sanctuary for the conscious stylist. Every tool is designed to spark creativity and reduce waste.
+              <h2 className="text-4xl md:text-7xl font-heading text-primary">The Creative Incubator</h2>
+              <p className="text-xl text-text font-medium leading-relaxed">
+                From fashion novices to style mavens, our platform is designed to spark creativity and foster a vibrant community of thrift enthusiasts. Whether you"re looking to revamp your wardrobe or share your unique style, we"ve got you covered.
               </p>
             </div>
-            <div className="font-accent text-3xl text-orange -rotate-6">
+            <div className="font-accent text-2xl text-text -rotate-9 opacity-80">
               Vintage Vibes Only
             </div>
           </div>
@@ -156,7 +174,7 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
                     <feature.icon size={32} />
                   </div>
                   <h3 className="text-3xl font-heading mb-4">{feature.title}</h3>
-                  <p className="text-lg opacity-80 leading-relaxed mb-8 font-body">
+                  <p className="text-lg leading-relaxed mb-8 font-body">
                     {feature.description}
                   </p>
                   <div className="flex items-center gap-3 font-bold text-sm uppercase tracking-widest">
@@ -176,15 +194,15 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-bg via-transparent to-transparent" />
         </div>
-        
-        <motion.div 
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           className="relative z-10 max-w-4xl mx-auto text-center px-6 space-y-12"
         >
           <Quote className="mx-auto text-pink opacity-20" size={80} />
           <p className="font-complementary italic text-4xl md:text-6xl text-bg leading-tight">
-            "Fashion is the most powerful art there is. It's movement, design, and architecture all in one. It shows the world who we are and who we'd like to be."
+            "Fashion is the most powerful art there is. It"s movement, design, and architecture all in one. It shows the world who we are and who we"d like to be."
           </p>
           <div className="space-y-2">
             <div className="w-20 h-1 bg-orange mx-auto rounded-full" />
@@ -201,8 +219,8 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
             <p className="text-2xl text-bg/70 max-w-2xl mx-auto font-body">
               Join thousands of stylists who are making fashion sustainable and fun.
             </p>
-            <button 
-              onClick={() => setActiveTab('lab')}
+            <button
+              onClick={() => setActiveTab("lab")}
               className="px-12 py-6 bg-pink text-primary font-heading text-3xl rounded-3xl hover:scale-105 transition-all shadow-2xl shadow-pink/20"
             >
               Get Started Now

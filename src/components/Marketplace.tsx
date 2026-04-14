@@ -118,7 +118,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
               placeholder="Search items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-zinc-200 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
           <button 
@@ -145,7 +145,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
             <motion.div 
               layout
               key={listing.id}
-              className="group bg-white rounded-[2.5rem] border border-black/5 overflow-hidden hover:shadow-2xl transition-all duration-500"
+              className="group bg-card rounded-[2.5rem] border border-border overflow-hidden hover:shadow-2xl transition-all duration-500"
             >
               <div className="aspect-[4/5] relative overflow-hidden">
                 <img 
@@ -154,14 +154,14 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                   alt={listing.title} 
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-primary shadow-sm border border-white/20">
+                  <span className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-primary shadow-sm border border-border">
                     {listing.category}
                   </span>
                 </div>
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <button 
                     onClick={() => onAddToCart(listing)}
-                    className="bg-white text-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform shadow-xl"
+                    className="bg-card text-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform shadow-xl"
                   >
                     <ShoppingBag size={18} />
                     Add to Cart
@@ -171,9 +171,9 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
               <div className="p-6 space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-lg text-zinc-900 group-hover:text-primary transition-colors line-clamp-1">{listing.title}</h3>
-                    <p className="text-xs text-zinc-400 flex items-center gap-1 mt-1">
-                      by <span className="font-medium text-zinc-600">{listing.sellerName}</span>
+                    <h3 className="font-bold text-lg text-text group-hover:text-primary transition-colors line-clamp-1">{listing.title}</h3>
+                    <p className="text-xs text-text-muted flex items-center gap-1 mt-1">
+                      by <span className="font-medium text-text">{listing.sellerName}</span>
                       {listing.sellerTier === 'premium' && <Star size={10} className="text-amber-400 fill-amber-400" />}
                       {listing.sellerRating !== undefined && (
                         <span className="flex items-center gap-0.5 ml-1 text-amber-500 font-bold">
@@ -220,12 +220,12 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
           ))
         ) : (
           <div className="col-span-full py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mx-auto text-zinc-200">
+            <div className="w-20 h-20 bg-card-hover rounded-full flex items-center justify-center mx-auto text-text-muted">
               <Search size={40} />
             </div>
             <div className="space-y-1">
-              <p className="text-xl font-bold text-zinc-900">No items found</p>
-              <p className="text-zinc-400">Try adjusting your search or category filters.</p>
+              <p className="text-xl font-bold text-text">No items found</p>
+              <p className="text-text-muted">Try adjusting your search or category filters.</p>
             </div>
           </div>
         )}
@@ -244,7 +244,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
+              className="bg-card rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-orange" />
@@ -259,36 +259,36 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Title</label>
+                      <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Title</label>
                       <input 
                         required
                         type="text"
                         value={newListing.title}
                         onChange={(e) => setNewListing({ ...newListing, title: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="Vintage Denim Jacket"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Price ($)</label>
+                      <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Price ($)</label>
                       <input 
                         required
                         type="number"
                         value={newListing.price}
                         onChange={(e) => setNewListing({ ...newListing, price: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="45"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Category</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Category</label>
                     <select 
                       required
                       value={newListing.category}
                       onChange={(e) => setNewListing({ ...newListing, category: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                     >
                       <option value="">Select Category</option>
                       <option value="Tops">Tops</option>
@@ -300,25 +300,25 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Description</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Description</label>
                     <textarea 
                       required
                       value={newListing.description}
                       onChange={(e) => setNewListing({ ...newListing, description: e.target.value })}
-                      className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px]"
+                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all min-h-[100px]"
                       placeholder="Tell us about the item's history and condition..."
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-400 ml-1">Image URL</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Image URL</label>
                     <div className="flex gap-2">
                       <input 
                         required
                         type="url"
                         value={newListing.imageUrl}
                         onChange={(e) => setNewListing({ ...newListing, imageUrl: e.target.value })}
-                        className="flex-1 bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="flex-1 bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="https://..."
                       />
                       <label className="bg-zinc-100 p-3 rounded-2xl cursor-pointer hover:bg-zinc-200 transition-colors">
