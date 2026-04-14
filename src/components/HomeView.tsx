@@ -156,7 +156,7 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
             </div>
           </div>
 
-          // card grid section
+          {/* card grid section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {features.map((feature, index) => (
               <motion.div
