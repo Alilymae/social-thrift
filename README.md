@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🌱 Social Thrift
 
-# Run and deploy your AI Studio app
+**Thrift. Style. Repeat. ♻️**
 
-This contains everything you need to run your app locally.
+A community-driven platform combining sustainable fashion, AI-powered styling, and a digital thrift marketplace.
 
-View your app in AI Studio: https://ai.studio/apps/b787f6ab-620a-4ab7-9871-7e6b40c071bf
+---
 
-## Run Locally
+## ⚙️ Features
 
-**Prerequisites:**  Node.js
+* 🧠 **AI Style Lab**
+  Outfit recommendations, visual generation, and short style insights
 
+* 🛍️ **Marketplace**
+  Buy and sell thrifted fashion with a tier-based system
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+* 🧥 **Wardrobe Styler**
+  Drag-and-drop outfit builder for digital styling
+
+* 🔧 **Upcycle Lab**
+  Tutorials and tools for DIY fashion and garment transformation
+
+* 🧑‍🤝‍🧑 **Community Feed**
+  Share outfits, interact, and discover trends
+
+---
+
+## 🧱 Tech Stack
+
+```txt
+Frontend:   React 19 + Vite
+Backend:    Express.js
+Database:   Firebase Firestore
+Auth:       Firebase Authentication
+AI:         Google Gemini APIs
+```
