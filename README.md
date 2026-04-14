@@ -28,7 +28,7 @@ A community-driven platform combining sustainable fashion, AI-powered styling, a
 ## 🧱 Tech Stack
 
 ```txt
-Frontend:   React 19 + Vite
+Frontend:   React 19 + Vite + Typescript
 Backend:    Express.js
 Database:   Firebase Firestore
 Auth:       Firebase Authentication
