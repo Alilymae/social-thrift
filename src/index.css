@@ -1,5 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Scheherazade+New:wght@400;500;600;700&family=Homemade+Apple&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: "Tan-Ashford-Bold";
   src: url("assets/fonts/ashford-bold.otf") format("truetype");
@@ -22,7 +25,10 @@
   --color-pink: #FFACC1;
   --color-cream: #F5E8D5;
   --color-orange: #FFBD59;
+  --color-light-orange: #f4e7d4;
   --color-dark: #383A43;
+  --color-dark-green: #00412D;
+  --color-light-green: #ADDFA7;
   
   --color-green-support: #3D7337;
   --color-yellow-support: #F7D550;
@@ -32,51 +38,68 @@
 
   --color-bg: var(--bg);
   --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
   --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
 }
 
 :root {
   --primary: #024A34;
   --bg: #F5E8D5;
   --text: #383A43;
+  --text-muted: #6B7280;
   --card: #FFFFFF;
+  --card-hover: #F9FAFB;
+  --border: rgba(0, 0, 0, 0.05);
   --sidebar-bg: #024A34;
   --sidebar-icon: #FFACC1;
+  --sidebar-hover-bg: #FFACC1;
+  --sidebar-hover-text: #024A34;
+  
+  --shadow-default: #000000;
+  --shadow-pink: #FFACC1;
+  --shadow-primary: #024A34;
+  --shadow-orange: #FFBD59;
+  --shadow-text: #383A43;
 }
 
 .dark {
   --primary: #FFBD59;
   --bg: #1A1B1E;
   --text: #F5E8D5;
+  --text-muted: #9CA3AF;
   --card: #2D2F36;
+  --card-hover: #373A40;
+  --border: rgba(255, 255, 255, 0.1);
   --sidebar-bg: #2D2F36;
   --sidebar-icon: #FFBD59;
+  --sidebar-hover-bg: #FFBD59;
+  --sidebar-hover-text: #1A1B1E;
+  
+  --shadow-default: #000000;
+  --shadow-pink: #FF6B9D;
+  --shadow-primary: #FFBD59;
+  --shadow-orange: #FFBD59;
+  --shadow-text: #F5E8D5;
 }
 
 .retro-shadow {
-  box-shadow: 7px 7px 0px #000;
+  box-shadow: 7px 7px 0px var(--shadow-orange);
 }
-
 .retro-shadow-pink {
-  box-shadow: 7px 7px 0px #ff6b9d; 
+  box-shadow: 7px 7px 0px var(--shadow-pink); 
 }
 
 .retro-shadow-primary {
-  box-shadow: 7px 7px 0px #024A34; 
-}
-
-.retro-shadow-dark-primary {
-  box-shadow: 7px 7px 0px #FFBD59; 
+  box-shadow: 7px 7px 0px var(--shadow-primary); 
 }
 
 .retro-shadow-text {
-  box-shadow: 7px 7px 0px #383A43; 
+  box-shadow: 7px 7px 0px var(--shadow-text); 
 }
 
 @layer base {
-  * {
-    @apply transition-colors duration-300;
-  }
   body {
     @apply font-body bg-bg text-text overflow-x-hidden;
   }
@@ -98,19 +121,12 @@
 }
 
 .vintage-border {
-  @apply border-2 border-primary rounded-2xl shadow-[4px_4px_0px_0px_#024A34];
-}
-
-.retro-shadow {
-  @apply shadow-[8px_8px_0px_0px_#FFBD59];
-}
-
-.retro-shadow-pink {
-  @apply shadow-[8px_8px_0px_0px_#FFACC1];
+  @apply border-2 border-primary rounded-2xl;
+  box-shadow: 4px 4px 0px 0px var(--shadow-primary);
 }
 
 .retro-shadow-green {
-  @apply shadow-[8px_8px_0px_0px_#024A34];
+  box-shadow: 8px 8px 0px 0px var(--shadow-primary);
 }
 
 .glass-card {

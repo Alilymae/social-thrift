@@ -60,13 +60,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getStyleRecommendations, getSummary, generateStyleVisual } from './services/geminiService';
-// import { generateDalleImage } from './services/openaiService';
 import { Sidebar } from './components/Sidebar';
 import { ProfileView } from './components/ProfileView';
 import { URLImage } from './components/URLImage';
 import logo from './assets/logo.png';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import "./index.css";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -149,7 +149,7 @@ export default function App() {
   const [isGeneratingVisual, setIsGeneratingVisual] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Styler State
+  // styler state 
   const [stylerItems, setStylerItems] = useState<OutfitItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -214,7 +214,7 @@ export default function App() {
           where('displayNameLower', '<=', searchLower + '\uf8ff')
         );
 
-        // Also try case-sensitive search on displayName as a fallback for users missing displayNameLower
+        // Also try case-sensitive search on the display name (eriel can you get this working)
         const qNormal = query(
           collection(db, 'users'),
           where('displayName', '>=', userSearchQuery),
@@ -884,6 +884,7 @@ export default function App() {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full bg-card/80 backdrop-blur-xl p-10 rounded-[3.5rem] shadow-2xl border-4 border-primary/5 relative z-10 retro-shadow-pink"
       >
+        {/* login and signup */}
         <div className="relative z-10">
           <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3 hover:rotate-12 transition-transform">
             <Sparkles className="text-cream" size={48} fill="currentColor" />
@@ -1009,16 +1010,21 @@ export default function App() {
               </div>
               <div className="h-6 w-px bg-primary/10 mx-1" />
               <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-[10px] font-bold px-3 py-1 rounded-full w-fit uppercase tracking-widest shadow-sm",
-                  userProfile?.tier === 'premium' ? "bg-orange text-primary" : "bg-primary/10 text-primary"
-                )}>
-                  {userProfile?.tier === 'premium' ? 'Premium' : 'Free'}
+                <span
+                  className={cn(
+                    "text-[10px] font-bold px-3 py-1 rounded-full w-fit uppercase tracking-widest shadow-sm",
+                    userProfile?.tier === "premium"
+                      ? "bg-orange text-primary dark:text-dark-green"
+                      : "bg-primary/10 text-primary"
+                  )}
+                >
+                  {userProfile?.tier === "premium" ? "Premium" : "Free"}
                 </span>
-                {userProfile?.tier !== 'premium' && (
+
+                {userProfile?.tier !== "premium" && (
                   <button
                     onClick={() => setIsPricingOpen(true)}
-                    className="text-[10px] font-bold text-primary hover:underline transition-all"
+                    className="text-[10px] font-bold text-primary hover:underline transition-all dark:text-yellow-support"
                   >
                     Upgrade
                   </button>
@@ -2474,3 +2480,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+// pls kill me now, this is inducing my migraine so baddd.
+// bruh eriel can you split this file if possible, its too long lmao.
