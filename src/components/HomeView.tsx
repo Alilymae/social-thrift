@@ -2,7 +2,10 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { Sparkles, Shirt, Layout, Video, ShoppingBag, Users, ArrowRight, Heart, Star, Quote, GemIcon } from "lucide-react";
-import logo from "../assets/logo.png";
+import logoLight from "../assets/logo-2.png";
+import logoDark from "../assets/logo-1.png";
+import sparkleLight1 from "../assets/sp-1.png";
+import sparkleLight2 from "../assets/sp-2.png";
 import "../index.css";
 
 interface HomeViewProps {
@@ -19,9 +22,9 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
 
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -500]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, 45]);
+  const rotate = useTransform(scrollYProgress, [0, 2], [0, 90]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.2]);
 
   //gemini icon
   const GeminiIcon = ({ size = 24, className }: { size?: number; className?: string }) => (
@@ -99,15 +102,24 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-pink/30 text-primary border-primary/10 font-accent text-1xl backdrop-blur-sm dark:text-yellow-support"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-pink/30 text-primary border border-primary/50 font-accent text-1xl backdrop-blur-sm dark:text-yellow-support"
           >
+            {/* add a sparkle here but not the lucide onw */}
             Hello, {userName}!
           </motion.div>
 
+          {/* light mode logo */}
           <img
-            src={logo}
+            src={logoLight}
             alt="Social Thrift Logo"
-            className="w-[300px] md:w-[500px] mx-auto drop-shadow-lg"
+            className="w-[300px] md:w-[500px] mx-auto drop-shadow-lg dark:hidden"
+          />
+
+          {/* dark mode logo */}
+          <img
+            src={logoDark}
+            alt="Social Thrift Logo"
+            className="w-[300px] md:w-[500px] mx-auto drop-shadow-lg hidden dark:block"
           />
 
           <p className="text-2xl text-primary max-w-2xl mx-auto font-medium leading-relaxed dark:text-yellow-support">
@@ -132,13 +144,45 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
 
         {/* parallax background elemnets */}
         <motion.div
-          style={{ y: y1, rotate }}
-          className="absolute top-20 left-10 w-64 h-64 bg-orange/20 rounded-[4rem] blur-3xl -z-10"
-        />
-        <motion.div
-          style={{ y: y2, rotate: -rotate }}
-          className="absolute bottom-20 right-10 w-96 h-96 bg-pink/20 rounded-full blur-3xl -z-10"
-        />
+          style={{ y: y1, rotate, scale, opacity }}
+          className="absolute w-full h-full -z-10"
+        >
+          {/* big */}
+          <img
+            src={sparkleLight2}
+            alt=""
+            className="w-40 h-auto object-cover absolute top-30 left-20 rotate-10"
+          />
+          {/* small */}
+          <img
+            src={sparkleLight1}
+            alt=""
+            className="w-20 h-auto object-cover absolute bottom-30 left-50 rotate-20"
+          />
+          {/* tiny */}
+          <img
+            src={sparkleLight1}
+            alt=""
+            className="w-10 h-auto object-cover absolute top-15 left-90 rotate-20"
+          />
+          <motion.div
+            style={{ y: y2, rotate: -rotate }}
+            className="absolute w-full h-full -z-10"
+          >
+            {/* big */}
+            <img
+              src={sparkleLight1}
+              alt=""
+              className="w-40 h-auto object-cover absolute bottom-40 left-230"
+            />
+            {/* small */}
+            <img
+              src={sparkleLight1}
+              alt=""
+              className="w-20 h-auto object-cover absolute top-10 right-50 rotate-20"
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* features section */}
@@ -215,7 +259,7 @@ export const HomeView = ({ userName, setActiveTab }: HomeViewProps) => {
       </section>
 
       {/* final extra then footer */}
-      <section className="relative z-30 bg-bg py-32 px-6 transition-colors duration-300">
+      <section className="relative z-30 py-32 px-6 transition-colors duration-300">
         <div className="max-w-7xl mx-auto">
           <div className="bg-cream-support rounded-[4rem] border-[#3B3346] border-2 p-12 md:p-24 text-center space-y-8 shadow-2xl dark:bg-purple-support dark:border-[#E9E3FF]">
             <h2 className="text-5xl md:text-8xl font-heading text-[#3B3346] dark:text-[#E9E3FF]">Ready to <br /> Transform?</h2>

@@ -84,17 +84,21 @@
   --shadow-text: #F5E8D5;
 }
 
-.retro-shadow {
-  box-shadow: 7px 7px 0px var(--shadow-orange);
+.retro-shadow-orange{
+  box-shadow: 7px 7px 0px #FFBD59;
+}
+.retro-shadow-green{
+  box-shadow: 7px 7px 0px #024A34;
+}
+.retro-shadow-dark{
+  box-shadow: 7px 7px 0px #383A43;
 }
 .retro-shadow-pink {
   box-shadow: 7px 7px 0px var(--shadow-pink); 
 }
-
 .retro-shadow-primary {
   box-shadow: 7px 7px 0px var(--shadow-primary); 
 }
-
 .retro-shadow-text {
   box-shadow: 7px 7px 0px var(--shadow-text); 
 }

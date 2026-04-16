@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -7,8 +7,8 @@ import {
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword
-} from 'firebase/auth';
-import { auth, db, handleFirestoreError, OperationType } from './firebase';
+} from "firebase/auth";
+import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import {
   doc,
   setDoc,
@@ -26,10 +26,10 @@ import {
   increment,
   arrayUnion,
   arrayRemove
-} from 'firebase/firestore';
-import { Garment, Outfit, OutfitItem } from './types';
-import { Stage, Layer, Rect } from 'react-konva';
-import ReactMarkdown from 'react-markdown';
+} from "firebase/firestore";
+import { Garment, Outfit, OutfitItem } from "./types";
+import { Stage, Layer, Rect } from "react-konva";
+import ReactMarkdown from "react-markdown";
 import {
   Camera,
   Plus,
@@ -57,46 +57,49 @@ import {
   Maximize2,
   Tag,
   Search
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { getStyleRecommendations, getSummary, generateStyleVisual } from './services/geminiService';
-import { Sidebar } from './components/Sidebar';
-import { ProfileView } from './components/ProfileView';
-import { URLImage } from './components/URLImage';
-import logo from './assets/logo.png';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { getStyleRecommendations, getSummary, generateStyleVisual } from "./services/geminiService";
+import { Sidebar } from "./components/Sidebar";
+import { ProfileView } from "./components/ProfileView";
+import { URLImage } from "./components/URLImage";
+import logoLight from "./assets/logo-2.png";
+import logoDark from "./assets/logo-1.png";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import "./index.css";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-import { UpcycleLab } from './components/UpcycleLab';
-import { Marketplace } from './components/Marketplace';
-import { CommentsSection } from './components/CommentsSection';
-import { CropModal } from './components/CropModal';
-import { PricingModal } from './components/PricingModal';
-import { HomeView } from './components/HomeView';
-import { ContactView } from './components/ContactView';
-import { PrivacyView } from './components/PrivacyView';
-import { TermsView } from './components/TermsView';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { RatingModal } from './components/RatingModal';
-import { compressImage, downloadOutfit } from './utils/image';
-import { UserProfile, UserTier } from './types';
+import { UpcycleLab } from "./components/UpcycleLab";
+import { Marketplace } from "./components/Marketplace";
+import { CommentsSection } from "./components/CommentsSection";
+import { CropModal } from "./components/CropModal";
+import { PricingModal } from "./components/PricingModal";
+import { HomeView } from "./components/HomeView";
+import { ContactView } from "./components/ContactView";
+import { PrivacyView } from "./components/PrivacyView";
+import { TermsView } from "./components/TermsView";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RatingModal } from "./components/RatingModal";
+import { compressImage, downloadOutfit } from "./utils/image";
+import { UserProfile, UserTier } from "./types";
 
-import { Footer } from './components/Footer';
-import { useToast } from './components/Toast';
+import { Footer } from "./components/Footer";
+import { useToast } from "./components/Toast";
 
 // --- Main App ---
 
 const BackgroundBubbles = () => {
   const bubbles = [
-    { color: '#FFACC1', size: '300px', top: '10%', left: '5%' },
-    { color: '#FFBD59', size: '400px', top: '60%', left: '80%' },
-    { color: '#024A34', size: '250px', top: '20%', left: '70%' },
-    { color: '#FFACC1', size: '350px', top: '80%', left: '10%' },
-    { color: '#FFBD59', size: '200px', top: '40%', left: '30%' },
+    { color1: "#B1A1ED", size: "400px", top: "-15%", left: "-10%" },
+    { color1: "#F7D550", size: "400px", top: "60%", left: "80%" },
+    { color1: "#3D7337", size: "400px", top: "-20%", left: "70%" },
+    { color1: "#FF86A4", size: "400px", top: "62%", left: "0%" },
+    { color1: "#70ACDE", size: "400px", top: "20%", left: "22%" },
+    { color1: "#AC3B61", size: "400px", top: "-15%", left: "40%" },
+    { color1: "#FFBD59", size: "400px", top: "35%", left: "47%" },
   ];
 
   return (
@@ -110,7 +113,7 @@ const BackgroundBubbles = () => {
             height: b.size,
             top: b.top,
             left: b.left,
-            background: `radial-gradient(circle, ${b.color} 0%, transparent 70%)`,
+            background: `radial-gradient(circle, ${b.color1} 45%, transparent 50%)`,
           }}
         />
       ))}
@@ -121,8 +124,8 @@ const BackgroundBubbles = () => {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'home' | 'wardrobe' | 'styler' | 'lab' | 'community' | 'upcycle' | 'market' | 'profile' | 'contact' | 'privacy' | 'terms'>('home');
-  const [communityFilter, setCommunityFilter] = useState<'all' | 'following'>('all');
+  const [activeTab, setActiveTab] = useState<"home" | "wardrobe" | "styler" | "lab" | "community" | "upcycle" | "market" | "profile" | "contact" | "privacy" | "terms">("home");
+  const [communityFilter, setCommunityFilter] = useState<"all" | "following">("all");
   const [followedUserIds, setFollowedUserIds] = useState<string[]>([]);
   const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
   const [viewingOutfit, setViewingOutfit] = useState<Outfit | null>(null);
@@ -131,14 +134,14 @@ export default function App() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // AI Lab State
+  // AI Lab state
   const [aiImage, setAiImage] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string | null>(null);
   const [visualRecommendation, setVisualRecommendation] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
@@ -153,18 +156,18 @@ export default function App() {
   const [stylerItems, setStylerItems] = useState<OutfitItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [stylerBgColor, setStylerBgColor] = useState('#ffffff');
+  const [stylerBgColor, setStylerBgColor] = useState("#ffffff");
   const [croppingImage, setCroppingImage] = useState<string | null>(null);
 
-  const moveItem = (direction: 'up' | 'down' | 'front' | 'back') => {
+  const moveItem = (direction: "up" | "down" | "front" | "back") => {
     if (selectedId === null) return;
     const items = [...stylerItems];
     let newId = selectedId;
 
-    if (direction === 'up') newId = selectedId + 1;
-    else if (direction === 'down') newId = selectedId - 1;
-    else if (direction === 'front') newId = items.length - 1;
-    else if (direction === 'back') newId = 0;
+    if (direction === "up") newId = selectedId + 1;
+    else if (direction === "down") newId = selectedId - 1;
+    else if (direction === "front") newId = items.length - 1;
+    else if (direction === "back") newId = 0;
 
     if (newId < 0 || newId >= items.length || newId === selectedId) return;
 
@@ -184,15 +187,15 @@ export default function App() {
   // Garment Detail State
   const [selectedGarment, setSelectedGarment] = useState<Garment | null>(null);
   const [isEditingGarment, setIsEditingGarment] = useState(false);
-  const [editGarmentData, setEditGarmentData] = useState({ category: '', tags: '' });
+  const [editGarmentData, setEditGarmentData] = useState({ category: "", tags: "" });
   const [upcycleTag, setUpcycleTag] = useState<string | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'payment' | 'success'>('cart');
-  const [paymentData, setPaymentData] = useState({ cardNumber: '', expiry: '', cvc: '', name: '' });
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "payment" | "success">("cart");
+  const [paymentData, setPaymentData] = useState({ cardNumber: "", expiry: "", cvc: "", name: "" });
   const [ratingTarget, setRatingTarget] = useState<{ orderId: string; sellerId: string; sellerName: string } | null>(null);
-  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [userSearchResults, setUserSearchResults] = useState<UserProfile[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
 
@@ -209,16 +212,16 @@ export default function App() {
 
         // Try searching by displayNameLower first (case-insensitive prefix)
         const qLower = query(
-          collection(db, 'users'),
-          where('displayNameLower', '>=', searchLower),
-          where('displayNameLower', '<=', searchLower + '\uf8ff')
+          collection(db, "users"),
+          where("displayNameLower", ">=", searchLower),
+          where("displayNameLower", "<=", searchLower + "\uf8ff")
         );
 
         // Also try case-sensitive search on the display name (eriel can you get this working)
         const qNormal = query(
-          collection(db, 'users'),
-          where('displayName', '>=', userSearchQuery),
-          where('displayName', '<=', userSearchQuery + '\uf8ff')
+          collection(db, "users"),
+          where("displayName", ">=", userSearchQuery),
+          where("displayName", "<=", userSearchQuery + "\uf8ff")
         );
 
         const [snapshotLower, snapshotNormal] = await Promise.all([
@@ -248,13 +251,13 @@ export default function App() {
     return () => clearTimeout(delayDebounceFn);
   }, [userSearchQuery, user?.uid]);
 
-  const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'outfit' | 'garment' | 'listing' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string, type: "outfit" | "garment" | "listing" } | null>(null);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
-  const [limitReached, setLimitReached] = useState<'wardrobe' | 'ai' | null>(null);
+  const [limitReached, setLimitReached] = useState<"wardrobe" | "ai" | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' ||
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("theme") === "dark" ||
+        (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
     return false;
   });
@@ -263,11 +266,11 @@ export default function App() {
 
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
 
@@ -277,9 +280,9 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        // Sync user profile to Firestore
+        // syncing user profile to firestore
         try {
-          const userRef = doc(db, 'users', u.uid);
+          const userRef = doc(db, "users", u.uid);
           let userSnap;
           try {
             userSnap = await getDoc(userRef);
@@ -290,13 +293,13 @@ export default function App() {
           if (userSnap && !userSnap.exists()) {
             const newProfile: UserProfile = {
               uid: u.uid,
-              displayName: u.displayName || 'Anonymous',
-              displayNameLower: (u.displayName || 'Anonymous').toLowerCase(),
-              photoURL: u.photoURL || '',
-              coverPhotoURL: '',
-              bio: '',
+              displayName: u.displayName || "Anonymous",
+              displayNameLower: (u.displayName || "Anonymous").toLowerCase(),
+              photoURL: u.photoURL || "",
+              coverPhotoURL: "",
+              bio: "",
               favorites: [],
-              tier: 'basic',
+              tier: "basic",
               createdAt: new Date().toISOString()
             };
             try {
@@ -312,8 +315,8 @@ export default function App() {
           } else if (userSnap) {
             const userData = userSnap.data() as any;
 
-            // Ensure displayNameLower exists for search and is up to date
-            const currentDisplayName = u.displayName || 'Anonymous';
+            // ensure displayNameLower exists for search and is up to date
+            const currentDisplayName = u.displayName || "Anonymous";
             const currentDisplayNameLower = currentDisplayName.toLowerCase();
 
             if (userData.displayNameLower !== currentDisplayNameLower || userData.displayName !== currentDisplayName) {
@@ -329,7 +332,7 @@ export default function App() {
 
             const profile: UserProfile = {
               ...userData,
-              tier: userData.tier || 'basic'
+              tier: userData.tier || "basic"
             };
             setUserProfile(profile);
             setFavoriteIds(userData.favorites || []);
@@ -345,15 +348,15 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  const [viewingComments, setViewingComments] = useState<{ id: string; type: 'outfits' | 'tutorials' } | null>(null);
+  const [viewingComments, setViewingComments] = useState<{ id: string; type: "outfits" | "tutorials" } | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
     // Real-time garments
     const garmentsQuery = query(
-      collection(db, 'garments'),
-      where('ownerId', '==', user.uid)
+      collection(db, "garments"),
+      where("ownerId", "==", user.uid)
     );
     const unsubscribeGarments = onSnapshot(garmentsQuery, (snapshot) => {
       const gList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Garment));
@@ -363,12 +366,12 @@ export default function App() {
         return timeB - timeA;
       });
       setGarments(gList);
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'garments'));
+    }, (error) => handleFirestoreError(error, OperationType.GET, "garments"));
 
     // Real-time outfits
     const outfitsQuery = query(
-      collection(db, 'outfits'),
-      where('isPublic', '==', true)
+      collection(db, "outfits"),
+      where("isPublic", "==", true)
     );
     const unsubscribeOutfits = onSnapshot(outfitsQuery, (snapshot) => {
       const oList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Outfit));
@@ -378,7 +381,7 @@ export default function App() {
         return timeB - timeA;
       });
       setOutfits(oList);
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'outfits'));
+    }, (error) => handleFirestoreError(error, OperationType.GET, "outfits"));
 
     return () => {
       unsubscribeGarments();
@@ -388,10 +391,10 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'follows'), where('followerId', '==', user.uid));
+    const q = query(collection(db, "follows"), where("followerId", "==", user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setFollowedUserIds(snapshot.docs.map(d => d.data().followingId));
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'follows'));
+    }, (error) => handleFirestoreError(error, OperationType.GET, "follows"));
     return () => unsubscribe();
   }, [user]);
 
@@ -414,7 +417,7 @@ export default function App() {
     setAuthError(null);
     setIsAuthenticating(true);
     try {
-      if (authMode === 'signup') {
+      if (authMode === "signup") {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -431,12 +434,12 @@ export default function App() {
     if (!user) return;
     try {
       try {
-        await updateDoc(doc(db, 'users', user.uid), { tier });
+        await updateDoc(doc(db, "users", user.uid), { tier });
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
       }
       setUserProfile(prev => prev ? { ...prev, tier } : null);
-      addToast(tier === 'premium' ? "Welcome to Premium!" : "Subscription cancelled.", "success");
+      addToast(tier === "premium" ? "Welcome to Premium!" : "Subscription cancelled.", "success");
     } catch (error) {
       console.error("Upgrade failed", error);
       addToast("Failed to update subscription.", "error");
@@ -459,15 +462,15 @@ export default function App() {
           title: item.title,
           price: item.price,
           imageUrl: item.imageUrl,
-          status: 'completed',
+          status: "completed",
           createdAt: serverTimestamp()
         };
 
         // 1. Create Order
-        const orderRef = await addDoc(collection(db, 'orders'), orderData);
+        const orderRef = await addDoc(collection(db, "orders"), orderData);
 
         // 2. Mark Listing as Sold
-        await updateDoc(doc(db, 'listings', item.id), { status: 'sold' });
+        await updateDoc(doc(db, "listings", item.id), { status: "sold" });
 
         return orderRef;
       });
@@ -475,7 +478,7 @@ export default function App() {
       await Promise.all(orderPromises);
 
       setCart([]);
-      setCheckoutStep('success');
+      setCheckoutStep("success");
       addToast("Order placed successfully!", "success");
     } catch (error) {
       console.error("Checkout failed", error);
@@ -490,7 +493,7 @@ export default function App() {
 
     try {
       // 1. Add Rating
-      await addDoc(collection(db, 'ratings'), {
+      await addDoc(collection(db, "ratings"), {
         orderId: ratingTarget.orderId,
         reviewerId: user.uid,
         targetUserId: ratingTarget.sellerId,
@@ -500,7 +503,7 @@ export default function App() {
       });
 
       // 2. Update Seller Profile Rating
-      const sellerRef = doc(db, 'users', ratingTarget.sellerId);
+      const sellerRef = doc(db, "users", ratingTarget.sellerId);
       const sellerSnap = await getDoc(sellerRef);
       if (sellerSnap.exists()) {
         const sellerData = sellerSnap.data();
@@ -531,8 +534,8 @@ export default function App() {
     if (!file || !user) return;
 
     // Enforce Wardrobe Limit for Basic Users
-    if (userProfile?.tier === 'basic' && garments.length >= 10) {
-      setLimitReached('wardrobe');
+    if (userProfile?.tier === "basic" && garments.length >= 10) {
+      setLimitReached("wardrobe");
       return;
     }
 
@@ -542,7 +545,7 @@ export default function App() {
     };
     reader.readAsDataURL(file);
     // Reset file input so same file can be selected again
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleCropComplete = async (croppedImage: string) => {
@@ -551,15 +554,15 @@ export default function App() {
 
     try {
       try {
-        await addDoc(collection(db, 'garments'), {
+        await addDoc(collection(db, "garments"), {
           ownerId: user.uid,
           imageUrl: croppedImage,
-          category: 'Uncategorized',
+          category: "Uncategorized",
           tags: [],
           createdAt: serverTimestamp()
         });
       } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'garments');
+        handleFirestoreError(error, OperationType.CREATE, "garments");
       }
     } catch (error) {
       console.error("Failed to add garment", error);
@@ -572,8 +575,8 @@ export default function App() {
       img.crossOrigin = "anonymous";
       img.src = imageUrl;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(imageUrl);
 
         canvas.width = img.width;
@@ -616,7 +619,7 @@ export default function App() {
         }
 
         ctx.putImageData(imageData, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
+        resolve(canvas.toDataURL("image/png"));
       };
       img.onerror = () => resolve(imageUrl);
     });
@@ -625,11 +628,11 @@ export default function App() {
   const handleUpdateGarment = async () => {
     if (!selectedGarment) return;
     try {
-      const garmentRef = doc(db, 'garments', selectedGarment.id);
+      const garmentRef = doc(db, "garments", selectedGarment.id);
       try {
         await updateDoc(garmentRef, {
           category: editGarmentData.category,
-          tags: editGarmentData.tags.split(',').map(t => t.trim()).filter(t => t !== '')
+          tags: editGarmentData.tags.split(",").map(t => t.trim()).filter(t => t !== "")
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `garments/${selectedGarment.id}`);
@@ -645,7 +648,7 @@ export default function App() {
     if (!user) return;
     const isFavorite = favoriteIds.includes(outfitId);
     try {
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid);
       if (isFavorite) {
         try {
           await updateDoc(userRef, {
@@ -667,7 +670,7 @@ export default function App() {
       }
 
       // Update likesCount on the outfit
-      const outfitRef = doc(db, 'outfits', outfitId);
+      const outfitRef = doc(db, "outfits", outfitId);
       try {
         await updateDoc(outfitRef, {
           likesCount: increment(isFavorite ? -1 : 1)
@@ -694,11 +697,11 @@ export default function App() {
     }
 
     // Quota Logic
-    const quota = userProfile?.tier === 'premium' ? 5 : 0;
+    const quota = userProfile?.tier === "premium" ? 5 : 0;
     const currentCount = userProfile?.generationCount || 0;
 
     if (isImageGenEnabled && currentCount >= quota) {
-      addToast(`You've reached your ${userProfile?.tier} limit of ${quota} image generations. Upgrade to Premium for more!`, "error");
+      addToast(`You"ve reached your ${userProfile?.tier} limit of ${quota} image generations. Upgrade to Premium for more!`, "error");
       return;
     }
 
@@ -713,13 +716,13 @@ export default function App() {
       setRecommendations(textResult);
 
       // 2. Update lastGenerationAt for spam protection
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         lastGenerationAt: new Date().toISOString()
       });
 
       // 3. Generate Visual (Gemini) if enabled
-      if (isImageGenEnabled && userProfile?.tier === 'premium') {
+      if (isImageGenEnabled && userProfile?.tier === "premium") {
         setIsGeneratingVisual(true);
         try {
           const visualResult = await generateStyleVisual(textResult, aiImage);
@@ -764,17 +767,17 @@ export default function App() {
 
       let docRef;
       try {
-        docRef = await addDoc(collection(db, 'saved_recommendations'), {
+        docRef = await addDoc(collection(db, "saved_recommendations"), {
           userId: user.uid,
-          userName: user.displayName || 'Anonymous',
-          userPhoto: user.photoURL || '',
+          userName: user.displayName || "Anonymous",
+          userPhoto: user.photoURL || "",
           imageUrl: compressedImage,
           summary: summaryResult,
           isPublic: isPublicRecommendation,
           createdAt: serverTimestamp()
         });
       } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'saved_recommendations');
+        handleFirestoreError(error, OperationType.CREATE, "saved_recommendations");
       }
 
       if (docRef) {
@@ -794,10 +797,10 @@ export default function App() {
     setIsSaving(true);
     try {
       try {
-        await addDoc(collection(db, 'outfits'), {
+        await addDoc(collection(db, "outfits"), {
           authorId: user.uid,
-          authorName: user.displayName || 'Anonymous',
-          authorPhoto: user.photoURL || '',
+          authorName: user.displayName || "Anonymous",
+          authorPhoto: user.photoURL || "",
           items: stylerItems,
           backgroundColor: stylerBgColor,
           likesCount: 0,
@@ -806,13 +809,13 @@ export default function App() {
           createdAt: serverTimestamp()
         });
       } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'outfits');
+        handleFirestoreError(error, OperationType.CREATE, "outfits");
       }
       setStylerItems([]);
       if (isPublicOutfit) {
-        setActiveTab('community');
+        setActiveTab("community");
       } else {
-        setActiveTab('profile');
+        setActiveTab("profile");
       }
       addToast(isPublicOutfit ? "Outfit posted to community!" : "Outfit saved privately to your profile!", "success");
     } catch (error) {
@@ -825,7 +828,7 @@ export default function App() {
   const handleDeleteOutfit = async (outfitId: string) => {
     try {
       // Delete comments first
-      const commentsRef = collection(db, 'outfits', outfitId, 'comments');
+      const commentsRef = collection(db, "outfits", outfitId, "comments");
       let commentsSnap;
       try {
         commentsSnap = await getDocs(commentsRef);
@@ -846,7 +849,7 @@ export default function App() {
 
       // Delete the outfit itself
       try {
-        await deleteDoc(doc(db, 'outfits', outfitId));
+        await deleteDoc(doc(db, "outfits", outfitId));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `outfits/${outfitId}`);
       }
@@ -860,7 +863,7 @@ export default function App() {
   const addToCart = (item: any) => {
     setCart(prev => [...prev, item]);
     setIsCartOpen(true);
-    setCheckoutStep('cart');
+    setCheckoutStep("cart");
   };
 
   const removeFromCart = (index: number) => {
@@ -891,7 +894,7 @@ export default function App() {
           </div>
           <h1 className="text-5xl font-heading text-primary text-center mb-2 tracking-tighter italic">Social Thrift</h1>
           <p className="text-dark/50 text-center mb-10 text-lg font-medium leading-tight">
-            {authMode === 'login' ? 'Welcome back to your creative style sanctuary.' : 'Join the conscious fashion revolution today.'}
+            {authMode === "login" ? "Welcome back to your creative style sanctuary." : "Join the conscious fashion revolution today."}
           </p>
 
           <form onSubmit={handleEmailAuth} className="space-y-6 mb-8">
@@ -935,7 +938,7 @@ export default function App() {
               disabled={isAuthenticating}
               className="w-full bg-primary text-cream rounded-2xl py-5 font-heading text-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl retro-shadow-pink disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isAuthenticating ? 'Wait a sec...' : (authMode === 'login' ? 'Sign In' : 'Create Account')}
+              {isAuthenticating ? "Wait a sec..." : (authMode === "login" ? "Sign In" : "Create Account")}
             </button>
           </form>
 
@@ -958,12 +961,12 @@ export default function App() {
           </button>
 
           <p className="mt-10 text-center text-dark/60 font-medium">
-            {authMode === 'login' ? "New here?" : "Already a member?"}
+            {authMode === "login" ? "New here?" : "Already a member?"}
             <button
-              onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+              onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
               className="ml-2 text-primary font-bold hover:underline underline-offset-4"
             >
-              {authMode === 'login' ? 'Sign up' : 'Sign in'}
+              {authMode === "login" ? "Sign up" : "Sign in"}
             </button>
           </p>
         </div>
@@ -975,7 +978,7 @@ export default function App() {
     </div>
   );
 
-  const filteredOutfits = communityFilter === 'all'
+  const filteredOutfits = communityFilter === "all"
     ? outfits
     : outfits.filter(o => followedUserIds.includes(o.authorId));
 
@@ -998,14 +1001,21 @@ export default function App() {
         />
 
         <main className="md:pl-[120px] transition-all duration-300 min-h-screen">
-          {/* Top Header for Logo & Badge */}
+          {/* Logo for the header and badge */}
           <header className="sticky top-0 z-40 p-6 flex items-center justify-between pointer-events-none">
             <div className="flex items-center gap-4 pointer-events-auto px-6 py-3">
               <div className="flex items-center gap-3">
+                {/* light mode logo */}
                 <img
-                  src={logo}
+                  src={logoLight}
                   alt="Social Thrift Logo"
-                  className="h-15 w-auto object-contain"
+                  className="h-15 w-auto object-contain dark:hidden"
+                />
+                {/* dark mode logo */}
+                <img
+                  src={logoDark}
+                  alt="Social Thrift Logo"
+                  className="h-15 w-auto object-contain dark:block hidden border-dark/10 dark:border-white/10"
                 />
               </div>
               <div className="h-6 w-px bg-primary/10 mx-1" />
@@ -1035,7 +1045,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-4 md:p-8 pb-24 md:pb-8">
             <AnimatePresence mode="wait">
-              {activeTab === 'home' && (
+              {activeTab === "home" && (
                 <motion.div
                   key="home"
                   initial={{ opacity: 0, x: 20 }}
@@ -1043,13 +1053,13 @@ export default function App() {
                   exit={{ opacity: 0, x: -20 }}
                 >
                   <HomeView
-                    userName={user.displayName || 'Friend'}
+                    userName={user.displayName || "Friend"}
                     setActiveTab={(tab) => setActiveTab(tab as any)}
                   />
                 </motion.div>
               )}
 
-              {activeTab === 'lab' && (
+              {activeTab === "lab" && (
                 <motion.div
                   key="lab"
                   initial={{ opacity: 0, y: 20 }}
@@ -1147,7 +1157,7 @@ export default function App() {
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => {
-                                if (userProfile?.tier === 'premium') {
+                                if (userProfile?.tier === "premium") {
                                   setIsImageGenEnabled(!isImageGenEnabled);
                                 } else {
                                   setIsPricingOpen(true);
@@ -1155,21 +1165,21 @@ export default function App() {
                               }}
                               className={cn(
                                 "w-10 h-5 rounded-full transition-colors relative",
-                                isImageGenEnabled && userProfile?.tier === 'premium' ? "bg-primary" : "bg-zinc-200",
-                                userProfile?.tier !== 'premium' && "opacity-50 cursor-not-allowed"
+                                isImageGenEnabled && userProfile?.tier === "premium" ? "bg-primary" : "bg-zinc-200",
+                                userProfile?.tier !== "premium" && "opacity-50 cursor-not-allowed"
                               )}
-                              title={userProfile?.tier === 'premium' ? "Toggle AI Image Generation" : "Premium Feature"}
+                              title={userProfile?.tier === "premium" ? "Toggle AI Image Generation" : "Premium Feature"}
                             >
                               <motion.div
-                                animate={{ x: isImageGenEnabled && userProfile?.tier === 'premium' ? 22 : 2 }}
+                                animate={{ x: isImageGenEnabled && userProfile?.tier === "premium" ? 22 : 2 }}
                                 className="w-3.5 h-3.5 bg-card rounded-full absolute top-[3px]"
                               />
                             </button>
                             <div className="flex flex-col">
                               <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">
-                                AI Visual: {isImageGenEnabled && userProfile?.tier === 'premium' ? "ON" : "OFF"}
+                                AI Visual: {isImageGenEnabled && userProfile?.tier === "premium" ? "ON" : "OFF"}
                               </span>
-                              {userProfile?.tier !== 'premium' && (
+                              {userProfile?.tier !== "premium" && (
                                 <span className="text-[7px] font-bold text-primary uppercase">Premium Only</span>
                               )}
                             </div>
@@ -1280,7 +1290,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'wardrobe' && (
+              {activeTab === "wardrobe" && (
                 <motion.div
                   key="wardrobe"
                   initial={{ opacity: 0, x: 20 }}
@@ -1372,7 +1382,7 @@ export default function App() {
                                 ) : (
                                   <h3 className="text-4xl font-heading text-primary leading-tight">{selectedGarment.category}</h3>
                                 )}
-                                <p className="text-zinc-400 text-sm font-medium">Added {selectedGarment.createdAt && typeof selectedGarment.createdAt.toDate === 'function' ? selectedGarment.createdAt.toDate().toLocaleDateString() : 'Just now'}</p>
+                                <p className="text-zinc-400 text-sm font-medium">Added {selectedGarment.createdAt && typeof selectedGarment.createdAt.toDate === "function" ? selectedGarment.createdAt.toDate().toLocaleDateString() : "Just now"}</p>
                               </div>
                               <div className="flex gap-2">
                                 <button
@@ -1382,7 +1392,7 @@ export default function App() {
                                     } else {
                                       setEditGarmentData({
                                         category: selectedGarment.category,
-                                        tags: selectedGarment.tags.join(', ')
+                                        tags: selectedGarment.tags.join(", ")
                                       });
                                       setIsEditingGarment(true);
                                     }
@@ -1432,7 +1442,7 @@ export default function App() {
                                 onClick={() => {
                                   const tag = selectedGarment.tags[0] || selectedGarment.category;
                                   setUpcycleTag(tag);
-                                  setActiveTab('upcycle');
+                                  setActiveTab("upcycle");
                                   setSelectedGarment(null);
                                 }}
                                 className="w-full bg-green-support text-bg py-5 rounded-2xl font-heading text-2xl flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-xl retro-shadow-pink"
@@ -1442,7 +1452,7 @@ export default function App() {
                               </button>
                               <button
                                 onClick={async () => {
-                                  setItemToDelete({ id: selectedGarment.id, type: 'garment' });
+                                  setItemToDelete({ id: selectedGarment.id, type: "garment" });
                                 }}
                                 className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
                               >
@@ -1458,7 +1468,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'styler' && (
+              {activeTab === "styler" && (
                 <motion.div
                   key="styler"
                   initial={{ opacity: 0, x: 20 }}
@@ -1481,13 +1491,13 @@ export default function App() {
                       <div className="flex items-center gap-2 bg-card p-2 rounded-[2rem] border border-border shadow-lg">
                         <button
                           onClick={() => setIsPublicOutfit(true)}
-                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${isPublicOutfit ? 'bg-primary text-bg shadow-xl' : 'text-primary/40 hover:text-primary'}`}
+                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${isPublicOutfit ? "bg-primary text-bg shadow-xl" : "text-primary/40 hover:text-primary"}`}
                         >
                           Public
                         </button>
                         <button
                           onClick={() => setIsPublicOutfit(false)}
-                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${!isPublicOutfit ? 'bg-primary text-bg shadow-xl' : 'text-primary/40 hover:text-primary'}`}
+                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${!isPublicOutfit ? "bg-primary text-bg shadow-xl" : "text-primary/40 hover:text-primary"}`}
                         >
                           Private
                         </button>
@@ -1514,7 +1524,7 @@ export default function App() {
                         className="bg-primary text-bg px-10 py-5 rounded-3xl font-heading text-2xl flex items-center gap-3 hover:scale-105 transition-all disabled:opacity-50 shadow-2xl retro-shadow-pink"
                       >
                         {isSaving ? <RefreshCw className="animate-spin" /> : <Save size={28} />}
-                        {isPublicOutfit ? 'Publish Outfit' : 'Save Private'}
+                        {isPublicOutfit ? "Publish Outfit" : "Save Private"}
                       </button>
                     </div>
                   </header>
@@ -1558,7 +1568,7 @@ export default function App() {
                             className="absolute top-8 left-8 flex flex-col gap-3 bg-card/90 backdrop-blur-md p-3 rounded-[2rem] shadow-2xl border border-border z-10"
                           >
                             <button
-                              onClick={() => moveItem('front')}
+                              onClick={() => moveItem("front")}
                               disabled={selectedId === stylerItems.length - 1}
                               className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
                               title="Bring to Front"
@@ -1566,7 +1576,7 @@ export default function App() {
                               <ChevronRight className="-rotate-90 scale-125" size={24} />
                             </button>
                             <button
-                              onClick={() => moveItem('up')}
+                              onClick={() => moveItem("up")}
                               disabled={selectedId === stylerItems.length - 1}
                               className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
                               title="Bring Forward"
@@ -1574,7 +1584,7 @@ export default function App() {
                               <ChevronRight className="-rotate-90" size={24} />
                             </button>
                             <button
-                              onClick={() => moveItem('down')}
+                              onClick={() => moveItem("down")}
                               disabled={selectedId === 0}
                               className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
                               title="Send Backward"
@@ -1582,7 +1592,7 @@ export default function App() {
                               <ChevronLeft className="-rotate-90" size={24} />
                             </button>
                             <button
-                              onClick={() => moveItem('back')}
+                              onClick={() => moveItem("back")}
                               disabled={selectedId === 0}
                               className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
                               title="Send to Back"
@@ -1645,7 +1655,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'community' && (
+              {activeTab === "community" && (
                 <motion.div
                   key="community"
                   initial={{ opacity: 0, x: 20 }}
@@ -1677,7 +1687,7 @@ export default function App() {
                           />
                           {userSearchQuery && (
                             <button
-                              onClick={() => setUserSearchQuery('')}
+                              onClick={() => setUserSearchQuery("")}
                               className="absolute right-3 p-1 hover:bg-card-hover rounded-full transition-colors"
                             >
                               <X size={14} className="text-text-muted" />
@@ -1689,15 +1699,15 @@ export default function App() {
 
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setCommunityFilter('all')}
-                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === 'all' ? 'bg-primary text-bg shadow-md' : 'text-primary/40 hover:text-primary hover:bg-primary/5'
+                            onClick={() => setCommunityFilter("all")}
+                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === "all" ? "bg-primary text-bg shadow-md" : "text-primary/40 hover:text-primary hover:bg-primary/5"
                               }`}
                           >
                             All Posts
                           </button>
                           <button
-                            onClick={() => setCommunityFilter('following')}
-                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === 'following' ? 'bg-primary text-bg shadow-md' : 'text-primary/40 hover:text-primary hover:bg-primary/5'
+                            onClick={() => setCommunityFilter("following")}
+                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === "following" ? "bg-primary text-bg shadow-md" : "text-primary/40 hover:text-primary hover:bg-primary/5"
                               }`}
                           >
                             Following
@@ -1708,7 +1718,7 @@ export default function App() {
                   </header>
 
                   <AnimatePresence>
-                    {userSearchQuery.trim() !== '' && !isSearchingUsers && userSearchResults.length === 0 && (
+                    {userSearchQuery.trim() !== "" && !isSearchingUsers && userSearchResults.length === 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1718,7 +1728,7 @@ export default function App() {
                         <Users className="mx-auto text-text-muted mb-4 opacity-20" size={48} />
                         <p className="text-text-muted font-medium">No stylists found matching "{userSearchQuery}"</p>
                         <button
-                          onClick={() => setUserSearchQuery('')}
+                          onClick={() => setUserSearchQuery("")}
                           className="mt-4 text-primary font-bold hover:underline"
                         >
                           Clear search
@@ -1736,7 +1746,7 @@ export default function App() {
                         <div className="flex items-center justify-between">
                           <h3 className="text-2xl font-heading text-primary">Stylists found</h3>
                           <button
-                            onClick={() => setUserSearchQuery('')}
+                            onClick={() => setUserSearchQuery("")}
                             className="text-sm font-bold text-zinc-400 hover:text-primary transition-colors"
                           >
                             Clear results
@@ -1750,8 +1760,8 @@ export default function App() {
                               className="flex items-center gap-4 p-4 bg-card-hover rounded-2xl border border-border cursor-pointer group"
                               onClick={() => {
                                 setViewingProfileId(u.uid);
-                                setActiveTab('profile');
-                                setUserSearchQuery('');
+                                setActiveTab("profile");
+                                setUserSearchQuery("");
                               }}
                             >
                               <img
@@ -1781,7 +1791,7 @@ export default function App() {
                       >
                         <div
                           className="aspect-square relative overflow-hidden group-hover:scale-[0.98] transition-transform duration-500 rounded-[2.5rem] m-2"
-                          style={{ backgroundColor: outfit.backgroundColor || '#f4f4f5' }}
+                          style={{ backgroundColor: outfit.backgroundColor || "#f4f4f5" }}
                         >
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative w-full h-full">
@@ -1795,10 +1805,10 @@ export default function App() {
                                     top: `${(item.y / 800) * 100}%`,
                                     width: `${((item.width || 200) / 800) * 100}%`,
                                     height: `${((item.height || 200) / 800) * 100}%`,
-                                    transformOrigin: '0 0',
+                                    transformOrigin: "0 0",
                                     transform: `scale(${item.scaleX !== undefined ? item.scaleX : item.scale}, ${item.scaleY !== undefined ? item.scaleY : item.scale}) rotate(${item.rotation}deg)`,
-                                    objectFit: 'cover',
-                                    borderRadius: '8px'
+                                    objectFit: "cover",
+                                    borderRadius: "8px"
                                   }}
                                   alt="Outfit item"
                                 />
@@ -1811,7 +1821,7 @@ export default function App() {
                             <button
                               onClick={() => {
                                 setViewingProfileId(outfit.authorId);
-                                setActiveTab('profile');
+                                setActiveTab("profile");
                               }}
                               className="flex items-center gap-4 hover:opacity-80 transition-opacity"
                             >
@@ -1824,7 +1834,7 @@ export default function App() {
                             <div className="flex gap-4 text-text-muted">
                               {outfit.authorId === user?.uid && (
                                 <button
-                                  onClick={() => setItemToDelete({ id: outfit.id, type: 'outfit' })}
+                                  onClick={() => setItemToDelete({ id: outfit.id, type: "outfit" })}
                                   className="p-2 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"
                                   title="Delete post"
                                 >
@@ -1842,7 +1852,7 @@ export default function App() {
                                 <span className="text-sm font-bold">{outfit.likesCount || 0}</span>
                               </button>
                               <button
-                                onClick={() => setViewingComments({ id: outfit.id, type: 'outfits' })}
+                                onClick={() => setViewingComments({ id: outfit.id, type: "outfits" })}
                                 className="flex items-center gap-1.5 p-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-500 transition-all"
                               >
                                 <MessageSquare size={20} />
@@ -1868,7 +1878,7 @@ export default function App() {
 
                   {/* Comments Modal */}
                   <AnimatePresence>
-                    {viewingComments && viewingComments.type === 'outfits' && (
+                    {viewingComments && viewingComments.type === "outfits" && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -1896,7 +1906,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'profile' && (
+              {activeTab === "profile" && (
                 <motion.div
                   key="profile"
                   initial={{ opacity: 0, x: 20 }}
@@ -1925,7 +1935,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'upcycle' && (
+              {activeTab === "upcycle" && (
                 <motion.div
                   key="upcycle"
                   initial={{ opacity: 0, x: 20 }}
@@ -1938,14 +1948,14 @@ export default function App() {
                       initialTag={upcycleTag || undefined}
                       onViewProfile={(uid) => {
                         setViewingProfileId(uid);
-                        setActiveTab('profile');
+                        setActiveTab("profile");
                       }}
                     />
                   )}
                 </motion.div>
               )}
 
-              {activeTab === 'market' && (
+              {activeTab === "market" && (
                 <motion.div
                   key="market"
                   initial={{ opacity: 0, x: 20 }}
@@ -1963,7 +1973,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'contact' && (
+              {activeTab === "contact" && (
                 <motion.div
                   key="contact"
                   initial={{ opacity: 0, x: 20 }}
@@ -1974,7 +1984,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'privacy' && (
+              {activeTab === "privacy" && (
                 <motion.div
                   key="privacy"
                   initial={{ opacity: 0, x: 20 }}
@@ -1985,7 +1995,7 @@ export default function App() {
                 </motion.div>
               )}
 
-              {activeTab === 'terms' && (
+              {activeTab === "terms" && (
                 <motion.div
                   key="terms"
                   initial={{ opacity: 0, x: 20 }}
@@ -2030,12 +2040,12 @@ export default function App() {
                       </button>
                       <button
                         onClick={async () => {
-                          if (itemToDelete.type === 'outfit') {
+                          if (itemToDelete.type === "outfit") {
                             await handleDeleteOutfit(itemToDelete.id);
-                          } else if (itemToDelete.type === 'listing') {
+                          } else if (itemToDelete.type === "listing") {
                             try {
                               try {
-                                await deleteDoc(doc(db, 'listings', itemToDelete.id));
+                                await deleteDoc(doc(db, "listings", itemToDelete.id));
                               } catch (error) {
                                 handleFirestoreError(error, OperationType.DELETE, `listings/${itemToDelete.id}`);
                               }
@@ -2046,13 +2056,13 @@ export default function App() {
                           } else {
                             try {
                               // Delete associated listings first
-                              const listingsRef = collection(db, 'listings');
-                              const q = query(listingsRef, where('garmentId', '==', itemToDelete.id));
+                              const listingsRef = collection(db, "listings");
+                              const q = query(listingsRef, where("garmentId", "==", itemToDelete.id));
                               let listingsSnap;
                               try {
                                 listingsSnap = await getDocs(q);
                               } catch (error) {
-                                handleFirestoreError(error, OperationType.GET, 'listings');
+                                handleFirestoreError(error, OperationType.GET, "listings");
                               }
 
                               if (listingsSnap) {
@@ -2068,7 +2078,7 @@ export default function App() {
 
                               // Delete the garment
                               try {
-                                await deleteDoc(doc(db, 'garments', itemToDelete.id));
+                                await deleteDoc(doc(db, "garments", itemToDelete.id));
                               } catch (error) {
                                 handleFirestoreError(error, OperationType.DELETE, `garments/${itemToDelete.id}`);
                               }
@@ -2096,7 +2106,7 @@ export default function App() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="fixed inset-0 z-[100] flex items-center justify-end p-4 bg-black/60 backdrop-blur-sm"
-                  onClick={() => { setIsCartOpen(false); setCheckoutStep('cart'); }}
+                  onClick={() => { setIsCartOpen(false); setCheckoutStep("cart"); }}
                 >
                   <motion.div
                     initial={{ x: 400 }}
@@ -2109,16 +2119,16 @@ export default function App() {
                       <div className="flex items-center gap-2">
                         <ShoppingBag className="text-text" size={24} />
                         <h3 className="text-xl font-bold text-text">
-                          {checkoutStep === 'cart' ? 'Your Cart' : checkoutStep === 'payment' ? 'Secure Payment' : 'Order Confirmed'}
+                          {checkoutStep === "cart" ? "Your Cart" : checkoutStep === "payment" ? "Secure Payment" : "Order Confirmed"}
                         </h3>
                       </div>
-                      <button onClick={() => { setIsCartOpen(false); setCheckoutStep('cart'); }} className="p-2 hover:bg-card-hover rounded-full transition-colors text-text">
+                      <button onClick={() => { setIsCartOpen(false); setCheckoutStep("cart"); }} className="p-2 hover:bg-card-hover rounded-full transition-colors text-text">
                         <X size={24} />
                       </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                      {checkoutStep === 'cart' && (
+                      {checkoutStep === "cart" && (
                         <>
                           {cart.length > 0 ? (
                             <div className="space-y-4">
@@ -2151,7 +2161,7 @@ export default function App() {
                         </>
                       )}
 
-                      {checkoutStep === 'payment' && (
+                      {checkoutStep === "payment" && (
                         <div className="space-y-8 py-4">
                           <div className="bg-zinc-900 text-white p-6 rounded-3xl space-y-8 shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
@@ -2162,17 +2172,17 @@ export default function App() {
                             <div className="space-y-1">
                               <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Number</p>
                               <p className="text-xl font-mono tracking-widest">
-                                {paymentData.cardNumber ? paymentData.cardNumber.replace(/(\d{4})/g, '$1 ').trim() : '•••• •••• •••• ••••'}
+                                {paymentData.cardNumber ? paymentData.cardNumber.replace(/(\d{4})/g, "$1 ").trim() : "•••• •••• •••• ••••"}
                               </p>
                             </div>
                             <div className="flex justify-between items-end">
                               <div className="space-y-1">
                                 <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Holder</p>
-                                <p className="text-sm font-bold uppercase tracking-wider">{paymentData.name || 'Your Name'}</p>
+                                <p className="text-sm font-bold uppercase tracking-wider">{paymentData.name || "Your Name"}</p>
                               </div>
                               <div className="space-y-1 text-right">
                                 <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Expires</p>
-                                <p className="text-sm font-bold">{paymentData.expiry || 'MM/YY'}</p>
+                                <p className="text-sm font-bold">{paymentData.expiry || "MM/YY"}</p>
                               </div>
                             </div>
                           </div>
@@ -2194,7 +2204,7 @@ export default function App() {
                                 type="text"
                                 maxLength={16}
                                 value={paymentData.cardNumber}
-                                onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, '') })}
+                                onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, "") })}
                                 className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
                                 placeholder="0000 0000 0000 0000"
                               />
@@ -2207,8 +2217,8 @@ export default function App() {
                                   maxLength={5}
                                   value={paymentData.expiry}
                                   onChange={(e) => {
-                                    let val = e.target.value.replace(/\D/g, '');
-                                    if (val.length > 2) val = val.slice(0, 2) + '/' + val.slice(2);
+                                    let val = e.target.value.replace(/\D/g, "");
+                                    if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2);
                                     setPaymentData({ ...paymentData, expiry: val });
                                   }}
                                   className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
@@ -2221,7 +2231,7 @@ export default function App() {
                                   type="text"
                                   maxLength={3}
                                   value={paymentData.cvc}
-                                  onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, '') })}
+                                  onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, "") })}
                                   className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
                                   placeholder="000"
                                 />
@@ -2231,7 +2241,7 @@ export default function App() {
                         </div>
                       )}
 
-                      {checkoutStep === 'success' && (
+                      {checkoutStep === "success" && (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-10">
                           <motion.div
                             initial={{ scale: 0 }}
@@ -2245,7 +2255,7 @@ export default function App() {
                             <p className="text-text-muted">Your sustainable style is on its way.</p>
                           </div>
                           <button
-                            onClick={() => { setIsCartOpen(false); setCheckoutStep('cart'); setActiveTab('profile'); }}
+                            onClick={() => { setIsCartOpen(false); setCheckoutStep("cart"); setActiveTab("profile"); }}
                             className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold"
                           >
                             View Order History
@@ -2254,16 +2264,16 @@ export default function App() {
                       )}
                     </div>
 
-                    {cart.length > 0 && checkoutStep !== 'success' && (
+                    {cart.length > 0 && checkoutStep !== "success" && (
                       <div className="p-6 border-t border-border bg-card-hover/50 space-y-4">
                         <div className="flex justify-between items-center text-lg">
                           <span className="text-text-muted font-medium">Total Amount</span>
                           <span className="text-text font-bold">${cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
                         </div>
 
-                        {checkoutStep === 'cart' ? (
+                        {checkoutStep === "cart" ? (
                           <button
-                            onClick={() => setCheckoutStep('payment')}
+                            onClick={() => setCheckoutStep("payment")}
                             className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg"
                           >
                             Proceed to Payment
@@ -2272,7 +2282,7 @@ export default function App() {
                         ) : (
                           <div className="flex gap-3">
                             <button
-                              onClick={() => setCheckoutStep('cart')}
+                              onClick={() => setCheckoutStep("cart")}
                               className="flex-1 bg-card text-text-muted py-4 rounded-2xl font-bold border border-border hover:bg-card-hover transition-all"
                             >
                               Back
@@ -2282,7 +2292,7 @@ export default function App() {
                               disabled={isCheckingOut || !paymentData.cardNumber || !paymentData.expiry || !paymentData.cvc}
                               className="flex-[2] bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50"
                             >
-                              {isCheckingOut ? <RefreshCw className="animate-spin mx-auto" /> : 'Pay Now'}
+                              {isCheckingOut ? <RefreshCw className="animate-spin mx-auto" /> : "Pay Now"}
                             </button>
                           </div>
                         )}
@@ -2318,7 +2328,7 @@ export default function App() {
                     className="relative w-full max-w-4xl aspect-square bg-card rounded-3xl overflow-hidden shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: viewingOutfit.backgroundColor || '#ffffff' }}>
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: viewingOutfit.backgroundColor || "#ffffff" }}>
                       <div className="relative w-full h-full">
                         {viewingOutfit.items.map((item, i) => (
                           <img
@@ -2330,10 +2340,10 @@ export default function App() {
                               top: `${(item.y / 800) * 100}%`,
                               width: `${((item.width || 200) / 800) * 100}%`,
                               height: `${((item.height || 200) / 800) * 100}%`,
-                              transformOrigin: '0 0',
+                              transformOrigin: "0 0",
                               transform: `scale(${item.scaleX !== undefined ? item.scaleX : item.scale}, ${item.scaleY !== undefined ? item.scaleY : item.scale}) rotate(${item.rotation}deg)`,
-                              objectFit: 'cover',
-                              borderRadius: '4px'
+                              objectFit: "cover",
+                              borderRadius: "4px"
                             }}
                             alt="Outfit item"
                           />
@@ -2412,7 +2422,7 @@ export default function App() {
                   isOpen={isPricingOpen}
                   onClose={() => setIsPricingOpen(false)}
                   onUpgrade={handleUpgrade}
-                  currentTier={userProfile?.tier || 'basic'}
+                  currentTier={userProfile?.tier || "basic"}
                 />
               )}
             </AnimatePresence>
@@ -2421,7 +2431,7 @@ export default function App() {
               isOpen={!!ratingTarget}
               onClose={() => setRatingTarget(null)}
               onSubmit={handleRatingSubmit}
-              targetName={ratingTarget?.sellerName || ''}
+              targetName={ratingTarget?.sellerName || ""}
             />
 
             <AnimatePresence>
@@ -2439,15 +2449,15 @@ export default function App() {
                     className="bg-card rounded-[2rem] p-8 max-w-md w-full text-center shadow-2xl"
                   >
                     <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      {limitReached === 'wardrobe' ? <Shirt size={32} /> : <Sparkles size={32} />}
+                      {limitReached === "wardrobe" ? <Shirt size={32} /> : <Sparkles size={32} />}
                     </div>
                     <h3 className="text-2xl font-bold text-text mb-2">
-                      {limitReached === 'wardrobe' ? 'Wardrobe Limit Reached' : 'Daily AI Limit Reached'}
+                      {limitReached === "wardrobe" ? "Wardrobe Limit Reached" : "Daily AI Limit Reached"}
                     </h3>
                     <p className="text-zinc-500 mb-8">
-                      {limitReached === 'wardrobe'
-                        ? 'Basic users can store up to 10 items. Upgrade to Premium for unlimited space!'
-                        : 'You\'ve used your daily style insights. Upgrade to Premium for unlimited AI power!'}
+                      {limitReached === "wardrobe"
+                        ? "Basic users can store up to 10 items. Upgrade to Premium for unlimited space!"
+                        : "You\"ve used your daily style insights. Upgrade to Premium for unlimited AI power!"}
                     </p>
                     <div className="space-y-3">
                       <button
@@ -2473,7 +2483,7 @@ export default function App() {
           </div>
           <Footer onNavigate={(tab: any) => {
             setActiveTab(tab);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }} />
         </main>
       </div>

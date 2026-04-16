@@ -106,9 +106,9 @@ export const Sidebar = ({
       id: "darkmode",
       onClick: toggleDarkMode,
       icon: darkMode ? (
-        <Sun size={20} fill="none" className="text-[var(--sidebar-icon)] flex-shrink-0 group-hover:text-[#024A34]" />
+        <Sun size={20} fill="none" className="text-[var(--sidebar-icon)] flex-shrink-0 group-hover:text-[#024A34] dark:text-primary dark:group-hover:text-dark" />
       ) : (
-        <Moon size={20} fill="none" className="text-[var(--sidebar-icon)] flex-shrink-0 group-hover:text-[#024A34]" />
+        <Moon size={20} fill="none" className="text-[var(--sidebar-icon)] flex-shrink-0 group-hover:text-[#024A34] dark:text-primary dark:group-hover:text-dark" />
       ),
       label: darkMode ? "Light" : "Dark",
       className: "text-white/60 hover:text-[#024A34] hover:bg-[#FFACC1]",
@@ -118,7 +118,7 @@ export const Sidebar = ({
       onClick: onOpenCart,
       icon: (
         <div className="relative flex-shrink-0">
-          <ShoppingCart size={20} fill="none" className="text-[var(--sidebar-icon)] group-hover:text-[#024A34]" />
+          <ShoppingCart size={20} fill="none" className="text-[var(--sidebar-icon)] group-hover:text-[#024A34] text-[var(--sidebar-icon)]" />
           {cartCount > 0 && (
             <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange text-primary text-[9px] font-bold rounded-full flex items-center justify-center border border-[var(--sidebar-bg)]">
               {cartCount}
@@ -134,7 +134,7 @@ export const Sidebar = ({
         {
           id: "logout",
           onClick: onLogout,
-          icon: <LogOut size={20} fill="none" className="text-[var(--sidebar-icon)] group-hover:translate-x-0.5 group-hover:text-[#024A34] transition-transform flex-shrink-0" />,
+          icon: <LogOut size={20} fill="none" className="text-[var(--sidebar-icon)] group-hover:translate-x-0.5 group-hover:text-[#024A34] dark:group-hover:text-dark transition-transform flex-shrink-0" />,
           label: "Logout",
           className: "text-white/60 hover:text-[#024A34] hover:bg-[#FFACC1]",
         },
@@ -246,7 +246,7 @@ export const Sidebar = ({
                 key={item.id}
                 onClick={item.onClick}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-2 py-2 rounded-[2rem] transition-all group",
+                  "w-full flex items-center gap-2.5 px-2 py-2 rounded-[2rem] transition-all group dark:hover:bg-primary hover:bg-[#FFACC1]",
                   item.className
                 )}
               >
