@@ -116,6 +116,9 @@ export interface Outfit {
   commentsCount: number;
   isPublic: boolean;
   backgroundColor?: string;
+  previewUrl?: string;
+  tags?: string[];
+  cardSize?: 'small' | 'medium' | 'large';
   createdAt: any;
 }
 

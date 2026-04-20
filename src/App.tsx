@@ -31,47 +31,75 @@ import { Garment, Outfit, OutfitItem } from "./types";
 import { Stage, Layer, Rect } from "react-konva";
 import ReactMarkdown from "react-markdown";
 import {
-  Camera,
-  Plus,
-  Trash2,
-  MessageSquare,
   Heart,
-  Sparkles,
-  Shirt,
-  Layout,
+  MessageSquare,
   Users,
+  Grid as GridIcon,
+  ShoppingBag,
+  Trash2,
   ChevronRight,
   ChevronLeft,
-  X,
-  RefreshCw,
+  Plus,
+  Image as ImageIcon,
   Save,
-  Video,
-  Info,
+  Download,
+  Share2,
+  X,
+  Search,
+  Bell,
+  Settings,
+  MoreVertical,
+  Minus,
+  Maximize2,
+  RotateCcw,
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
+  Layout,
+  User as LucideUser,
+  ArrowLeft,
+  Filter,
+  Package,
+  Check,
+  TrendingUp,
+  Award,
+  Zap,
+  Star,
   ExternalLink,
   Edit2,
-  ShoppingBag,
   LogOut,
   CheckCircle2,
   CreditCard,
-  Download,
-  Maximize2,
+  Layers,
+  Palette,
+  ArrowUpRight,
+  Grid,
+  List,
+  RefreshCw,
+  Camera,
+  Info,
   Tag,
-  Search
+  Video,
+  Shirt,
+  LayoutGrid
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getStyleRecommendations, getSummary, generateStyleVisual } from "./services/geminiService";
 import { Sidebar } from "./components/Sidebar";
 import { ProfileView } from "./components/ProfileView";
 import { URLImage } from "./components/URLImage";
-import logoLight from "./assets/logo-2.png";
-import logoDark from "./assets/logo-1.png";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import logoLight from "./assets/logo-2.png";
+import logoDark from "./assets/logo-1.png";
 import "./index.css";
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+import { CommunityView } from "./components/CommunityView";
 import { UpcycleLab } from "./components/UpcycleLab";
 import { Marketplace } from "./components/Marketplace";
 import { CommentsSection } from "./components/CommentsSection";
@@ -83,7 +111,7 @@ import { PrivacyView } from "./components/PrivacyView";
 import { TermsView } from "./components/TermsView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RatingModal } from "./components/RatingModal";
-import { compressImage, downloadOutfit } from "./utils/image";
+import { compressImage, downloadOutfit, generateOutfitPreview } from "./utils/image";
 import { UserProfile, UserTier } from "./types";
 
 import { Footer } from "./components/Footer";
@@ -91,32 +119,54 @@ import { useToast } from "./components/Toast";
 
 // --- Main App ---
 
+// helper to generate random values
+const rand = (min: number, max: number): number => {
+  return Math.random() * (max - min) + min;
+};
 const BackgroundBubbles = () => {
   const bubbles = [
-    { color1: "#B1A1ED", size: "400px", top: "-15%", left: "-10%" },
-    { color1: "#F7D550", size: "400px", top: "60%", left: "80%" },
-    { color1: "#3D7337", size: "400px", top: "-20%", left: "70%" },
-    { color1: "#FF86A4", size: "400px", top: "62%", left: "0%" },
-    { color1: "#70ACDE", size: "400px", top: "20%", left: "22%" },
-    { color1: "#AC3B61", size: "400px", top: "-15%", left: "40%" },
-    { color1: "#FFBD59", size: "400px", top: "35%", left: "47%" },
+    { color1: "#B1A1ED", size: 400, top: "-15%", left: "-10%" },
+    { color1: "#F7D550", size: 400, top: "60%", left: "80%" },
+    { color1: "#3D7337", size: 400, top: "-20%", left: "70%" },
+    { color1: "#FF86A4", size: 400, top: "62%", left: "0%" },
+    { color1: "#70ACDE", size: 400, top: "20%", left: "22%" },
+    { color1: "#AC3B61", size: 400, top: "-15%", left: "40%" },
+    { color1: "#FFBD59", size: 400, top: "35%", left: "47%" },
   ];
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
-      {bubbles.map((b, i) => (
-        <div
-          key={i}
-          className="bubble"
-          style={{
-            width: b.size,
-            height: b.size,
-            top: b.top,
-            left: b.left,
-            background: `radial-gradient(circle, ${b.color1} 45%, transparent 50%)`,
-          }}
-        />
-      ))}
+      {bubbles.map((b, i) => {
+        const xValues = [0, rand(-50, 50), rand(-80, 80), 0];
+        const yValues = [0, rand(-50, 50), rand(-80, 80), 0];
+        const scaleValues = [1, rand(1.05, 1.15), 1];
+        const rotateValues = [0, rand(-20, 20), rand(-20, 20), 0];
+
+        return (
+          <motion.div
+            key={i}
+            className="absolute rounded-full blur-3xl opacity-50"
+            style={{
+              width: b.size,
+              height: b.size,
+              top: b.top,
+              left: b.left,
+              background: `radial-gradient(circle, ${b.color1} 45%, transparent 55%)`,
+            }}
+            animate={{
+              x: xValues,
+              y: yValues,
+              scale: scaleValues,
+              rotate: rotateValues,
+            }}
+            transition={{
+              duration: rand(10, 20),
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -134,7 +184,7 @@ export default function App() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // AI Lab state
+  // AI Lab State
   const [aiImage, setAiImage] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string | null>(null);
   const [visualRecommendation, setVisualRecommendation] = useState<string | null>(null);
@@ -152,12 +202,27 @@ export default function App() {
   const [isGeneratingVisual, setIsGeneratingVisual] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // styler state 
+  const GeminiIcon = ({ size = 24, fill = "none", className }: { size?: number; fill?: string; className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} xmlns="http://www.w3.org/2000/svg" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3L14.5 9.5L21 12L14.5 14.5L12 21L9.5 14.5L3 12L9.5 9.5L12 3Z" />
+    </svg>
+  );
+
+  // Styler State
   const [stylerItems, setStylerItems] = useState<OutfitItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [stylerBgColor, setStylerBgColor] = useState("#ffffff");
   const [croppingImage, setCroppingImage] = useState<string | null>(null);
+  const [wardrobeView, setWardrobeView] = useState<"grid" | "list">("grid");
+  const [wardrobeFilter, setWardrobeFilter] = useState("all");
+  const [stylerSearch, setStylerSearch] = useState("");
+  const [stylerCategoryFilter, setStylerCategoryFilter] = useState("all");
+  const [wardrobeVisibleCount, setWardrobeVisibleCount] = useState(12);
+
+  useEffect(() => {
+    setWardrobeVisibleCount(12);
+  }, [wardrobeFilter]);
 
   const moveItem = (direction: "up" | "down" | "front" | "back") => {
     if (selectedId === null) return;
@@ -210,14 +275,12 @@ export default function App() {
       try {
         const searchLower = userSearchQuery.toLowerCase();
 
-        // Try searching by displayNameLower first (case-insensitive prefix)
         const qLower = query(
           collection(db, "users"),
           where("displayNameLower", ">=", searchLower),
           where("displayNameLower", "<=", searchLower + "\uf8ff")
         );
 
-        // Also try case-sensitive search on the display name (eriel can you get this working)
         const qNormal = query(
           collection(db, "users"),
           where("displayName", ">=", userSearchQuery),
@@ -277,20 +340,24 @@ export default function App() {
   const toggleDarkMode = () => setDarkMode(!darkMode);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
-        // syncing user profile to firestore
-        try {
-          const userRef = doc(db, "users", u.uid);
-          let userSnap;
-          try {
-            userSnap = await getDoc(userRef);
-          } catch (error) {
-            handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
-          }
+        const userRef = doc(db, "users", u.uid);
 
-          if (userSnap && !userSnap.exists()) {
+        unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const userData = docSnap.data() as any;
+            const profile: UserProfile = {
+              ...userData,
+              tier: userData.tier || "basic"
+            };
+            setUserProfile(profile);
+            setFavoriteIds(userData.favorites || []);
+            setLoading(false);
+          } else {
             const newProfile: UserProfile = {
               uid: u.uid,
               displayName: u.displayName || "Anonymous",
@@ -302,58 +369,69 @@ export default function App() {
               tier: "basic",
               createdAt: new Date().toISOString()
             };
-            try {
-              await setDoc(userRef, {
-                ...newProfile,
-                createdAt: serverTimestamp()
-              });
-            } catch (error) {
-              handleFirestoreError(error, OperationType.WRITE, `users/${u.uid}`);
-            }
-            setUserProfile(newProfile);
-            setFavoriteIds([]);
-          } else if (userSnap) {
-            const userData = userSnap.data() as any;
-
-            // ensure displayNameLower exists for search and is up to date
-            const currentDisplayName = u.displayName || "Anonymous";
-            const currentDisplayNameLower = currentDisplayName.toLowerCase();
-
-            if (userData.displayNameLower !== currentDisplayNameLower || userData.displayName !== currentDisplayName) {
-              try {
-                await updateDoc(userRef, {
-                  displayName: currentDisplayName,
-                  displayNameLower: currentDisplayNameLower
-                });
-              } catch (error) {
-                console.error("Failed to update displayNameLower", error);
-              }
-            }
-
-            const profile: UserProfile = {
-              ...userData,
-              tier: userData.tier || "basic"
-            };
-            setUserProfile(profile);
-            setFavoriteIds(userData.favorites || []);
+            setDoc(userRef, {
+              ...newProfile,
+              createdAt: serverTimestamp()
+            }).then(() => {
+              setUserProfile(newProfile);
+              setFavoriteIds([]);
+              setLoading(false);
+            }).catch(err => {
+              console.error("Profile creation failed", err);
+              setLoading(false);
+            });
           }
-        } catch (error) {
-          console.error("User sync failed", error);
-        }
+        }, (error) => {
+          console.error("Profile listener failed", error);
+          setLoading(false);
+        });
       } else {
         setUserProfile(null);
+        setFavoriteIds([]);
+        if (unsubscribeProfile) unsubscribeProfile();
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   const [viewingComments, setViewingComments] = useState<{ id: string; type: "outfits" | "tutorials" } | null>(null);
+  const [selectedCardSize, setSelectedCardSize] = useState<"small" | "medium" | "large">("medium");
+  const [temporaryOutfit, setTemporaryOutfit] = useState<Outfit | null>(null);
+
+  useEffect(() => {
+    if (viewingComments?.type === 'outfits') {
+      const id = viewingComments.id;
+      const found = outfits.find(o => o.id === id);
+      if (!found && !viewingOutfit) {
+        getDoc(doc(db, "outfits", id)).then(snap => {
+          if (snap.exists()) {
+            setTemporaryOutfit({ ...snap.data(), id: snap.id } as Outfit);
+          }
+        }).catch(err => console.error("Error fetching outfit detail:", err));
+      } else {
+        setTemporaryOutfit(null);
+      }
+    } else {
+      setTemporaryOutfit(null);
+    }
+  }, [viewingComments, outfits, viewingOutfit]);
+
+  const canvasDimensions = React.useMemo(() => {
+    switch (selectedCardSize) {
+      case 'small': return { width: 800, height: 600 };
+      case 'large': return { width: 533, height: 800 };
+      default: return { width: 800, height: 800 };
+    }
+  }, [selectedCardSize]);
 
   useEffect(() => {
     if (!user) return;
 
-    // Real-time garments
     const garmentsQuery = query(
       collection(db, "garments"),
       where("ownerId", "==", user.uid)
@@ -368,7 +446,6 @@ export default function App() {
       setGarments(gList);
     }, (error) => handleFirestoreError(error, OperationType.GET, "garments"));
 
-    // Real-time outfits
     const outfitsQuery = query(
       collection(db, "outfits"),
       where("isPublic", "==", true)
@@ -450,7 +527,6 @@ export default function App() {
     if (!user || cart.length === 0) return;
     setIsCheckingOut(true);
 
-    // Simulate payment delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
@@ -466,10 +542,7 @@ export default function App() {
           createdAt: serverTimestamp()
         };
 
-        // 1. Create Order
         const orderRef = await addDoc(collection(db, "orders"), orderData);
-
-        // 2. Mark Listing as Sold
         await updateDoc(doc(db, "listings", item.id), { status: "sold" });
 
         return orderRef;
@@ -492,7 +565,6 @@ export default function App() {
     if (!user || !ratingTarget) return;
 
     try {
-      // 1. Add Rating
       await addDoc(collection(db, "ratings"), {
         orderId: ratingTarget.orderId,
         reviewerId: user.uid,
@@ -502,7 +574,6 @@ export default function App() {
         createdAt: serverTimestamp()
       });
 
-      // 2. Update Seller Profile Rating
       const sellerRef = doc(db, "users", ratingTarget.sellerId);
       const sellerSnap = await getDoc(sellerRef);
       if (sellerSnap.exists()) {
@@ -533,7 +604,6 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Enforce Wardrobe Limit for Basic Users
     if (userProfile?.tier === "basic" && garments.length >= 10) {
       setLimitReached("wardrobe");
       return;
@@ -544,7 +614,6 @@ export default function App() {
       setCroppingImage(reader.result as string);
     };
     reader.readAsDataURL(file);
-    // Reset file input so same file can be selected again
     e.target.value = "";
   };
 
@@ -586,8 +655,6 @@ export default function App() {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Improved background removal (handles near-white and greyish backgrounds)
-        // We sample the corners to get a better idea of the background color
         const corners = [
           [0, 0], [canvas.width - 1, 0], [0, canvas.height - 1], [canvas.width - 1, canvas.height - 1]
         ];
@@ -605,14 +672,12 @@ export default function App() {
           const g = data[i + 1];
           const b = data[i + 2];
 
-          // Distance from background color
           const dist = Math.sqrt(
             Math.pow(r - bgR, 2) +
             Math.pow(g - bgG, 2) +
             Math.pow(b - bgB, 2)
           );
 
-          // If pixel is close to background color or very bright, make it transparent
           if (dist < 30 || (r > 230 && g > 230 && b > 230)) {
             data[i + 3] = 0;
           }
@@ -651,30 +716,23 @@ export default function App() {
       const userRef = doc(db, "users", user.uid);
       if (isFavorite) {
         try {
-          await updateDoc(userRef, {
-            favorites: arrayRemove(outfitId)
-          });
+          await updateDoc(userRef, { favorites: arrayRemove(outfitId) });
         } catch (error) {
           handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
         }
         setFavoriteIds(prev => prev.filter(id => id !== outfitId));
       } else {
         try {
-          await updateDoc(userRef, {
-            favorites: arrayUnion(outfitId)
-          });
+          await updateDoc(userRef, { favorites: arrayUnion(outfitId) });
         } catch (error) {
           handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
         }
         setFavoriteIds(prev => [...prev, outfitId]);
       }
 
-      // Update likesCount on the outfit
       const outfitRef = doc(db, "outfits", outfitId);
       try {
-        await updateDoc(outfitRef, {
-          likesCount: increment(isFavorite ? -1 : 1)
-        });
+        await updateDoc(outfitRef, { likesCount: increment(isFavorite ? -1 : 1) });
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `outfits/${outfitId}`);
       }
@@ -686,7 +744,6 @@ export default function App() {
   const handleAnalyze = async () => {
     if (!aiImage || isAnalyzing || !user) return;
 
-    // Spam Protection: 10 second cooldown
     if (userProfile?.lastGenerationAt) {
       const lastGen = new Date(userProfile.lastGenerationAt).getTime();
       const now = new Date().getTime();
@@ -696,12 +753,11 @@ export default function App() {
       }
     }
 
-    // Quota Logic
     const quota = userProfile?.tier === "premium" ? 5 : 0;
     const currentCount = userProfile?.generationCount || 0;
 
     if (isImageGenEnabled && currentCount >= quota) {
-      addToast(`You"ve reached your ${userProfile?.tier} limit of ${quota} image generations. Upgrade to Premium for more!`, "error");
+      addToast(`You've reached your ${userProfile?.tier} limit of ${quota} image generations. Upgrade to Premium for more!`, "error");
       return;
     }
 
@@ -711,27 +767,18 @@ export default function App() {
     setIsGeneratingVisual(false);
 
     try {
-      // 1. Get Text Recommendations (Gemini)
       const textResult = await getStyleRecommendations(aiImage);
       setRecommendations(textResult);
 
-      // 2. Update lastGenerationAt for spam protection
       const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        lastGenerationAt: new Date().toISOString()
-      });
+      await updateDoc(userRef, { lastGenerationAt: new Date().toISOString() });
 
-      // 3. Generate Visual (Gemini) if enabled
       if (isImageGenEnabled && userProfile?.tier === "premium") {
         setIsGeneratingVisual(true);
         try {
           const visualResult = await generateStyleVisual(textResult, aiImage);
           setVisualRecommendation(visualResult || null);
-
-          // Increment generation count
-          await updateDoc(userRef, {
-            generationCount: increment(1)
-          });
+          await updateDoc(userRef, { generationCount: increment(1) });
         } catch (err: any) {
           console.error("Visual generation failed", err);
           addToast(err.message || "Failed to generate AI visual.", "error");
@@ -757,7 +804,6 @@ export default function App() {
       const summaryResult = await getSummary(recommendations);
       console.log("Summary generated:", summaryResult);
 
-      // Use visual recommendation - user explicitly requested NOT to save original image
       if (!visualRecommendation) {
         addToast("Please wait for the AI to generate the visual recommendation before saving.", "info");
         return;
@@ -796,16 +842,37 @@ export default function App() {
     if (!user || stylerItems.length === 0) return;
     setIsSaving(true);
     try {
+      const allTags = new Set<string>();
+      stylerItems.forEach(item => {
+        const garment = garments.find(g => g.id === item.garmentId);
+        if (garment && garment.tags) {
+          garment.tags.forEach(t => allTags.add(t.toLowerCase()));
+        }
+      });
+
+      const previewUrl = await generateOutfitPreview({
+        items: stylerItems,
+        backgroundColor: stylerBgColor
+      });
+
+      const optimizedItems = stylerItems.map(item => ({
+        ...item,
+        imageUrl: ""
+      }));
+
       try {
         await addDoc(collection(db, "outfits"), {
           authorId: user.uid,
           authorName: user.displayName || "Anonymous",
           authorPhoto: user.photoURL || "",
-          items: stylerItems,
+          items: optimizedItems,
+          previewUrl,
           backgroundColor: stylerBgColor,
           likesCount: 0,
           commentsCount: 0,
           isPublic: isPublicOutfit,
+          tags: Array.from(allTags),
+          cardSize: isPublicOutfit ? selectedCardSize : "medium",
           createdAt: serverTimestamp()
         });
       } catch (error) {
@@ -827,7 +894,6 @@ export default function App() {
 
   const handleDeleteOutfit = async (outfitId: string) => {
     try {
-      // Delete comments first
       const commentsRef = collection(db, "outfits", outfitId, "comments");
       let commentsSnap;
       try {
@@ -847,7 +913,6 @@ export default function App() {
         await Promise.all(deletePromises);
       }
 
-      // Delete the outfit itself
       try {
         await deleteDoc(doc(db, "outfits", outfitId));
       } catch (error) {
@@ -870,6 +935,7 @@ export default function App() {
     setCart(prev => prev.filter((_, i) => i !== index));
   };
 
+
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
       <RefreshCw className="animate-spin text-emerald-500" size={32} />
@@ -877,24 +943,26 @@ export default function App() {
   );
 
   if (!user) return (
-    <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-6 font-body relative overflow-hidden">
-      {/* Decorative background blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] aspect-square bg-pink/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-orange/20 rounded-full blur-[120px] animate-pulse" />
+    <div className="min-h-screen bg-cream dark:bg-dark flex flex-col items-center justify-center p-6 font-body relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[30%] aspect-square bg-lavender-support rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] aspect-square bg-orange rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[70%] w-[30%] aspect-square bg-light-green rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute top-[-20%] right-[10%] w-[30%] aspect-square bg-pink rounded-full blur-[120px] animate-pulse" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-card/80 backdrop-blur-xl p-10 rounded-[3.5rem] shadow-2xl border-4 border-primary/5 relative z-10 retro-shadow-pink"
+        className="max-w-md w-full bg-cream-support dark:bg-[#111110] backdrop-blur-xl p-10 rounded-[3rem] shadow-2xl relative z-10 retro-shadow-primary"
       >
-        {/* login and signup */}
         <div className="relative z-10">
-          <div className="w-24 h-24 bg-primary rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3 hover:rotate-12 transition-transform">
-            <Sparkles className="text-cream" size={48} fill="currentColor" />
+          <div className="w-full h-full flex items-center justify-center mx-auto mb-5 hover:rotate-12 transition-transform">
+            <div className="flex items-center gap-2">
+              <img src={logoLight} alt="Social Thrift Logo" className="h-20 w-auto object-contain dark:hidden" />
+              <img src={logoDark} alt="Social Thrift Logo" className="h-20 w-auto object-contain dark:block hidden border-dark/10 dark:border-white/10" />
+            </div>
           </div>
-          <h1 className="text-5xl font-heading text-primary text-center mb-2 tracking-tighter italic">Social Thrift</h1>
-          <p className="text-dark/50 text-center mb-10 text-lg font-medium leading-tight">
-            {authMode === "login" ? "Welcome back to your creative style sanctuary." : "Join the conscious fashion revolution today."}
+          <p className="text-dark/50 dark:text-primary/50 font-alt text-center mb-8 text-lg font-medium leading-tight">
+            {authMode === "login" ? '"Turning Second Chances into First Choices."' : '"Your Ex\'s Clothes? Upgrade Them."'}
           </p>
 
           <form onSubmit={handleEmailAuth} className="space-y-6 mb-8">
@@ -904,7 +972,7 @@ export default function App() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-cream/50 border-2 border-primary/10 rounded-2xl px-6 py-5 text-dark focus:outline-none focus:border-primary transition-all font-medium"
+                className="w-full bg-bg/50 dark:bg-[#F7D550]/10 border-2 border-primary/10 rounded-4xl px-6 py-5 text-dark dark:text-primary/50 focus:outline-none focus:border-primary transition-all"
                 placeholder="name@example.com"
                 required
               />
@@ -915,7 +983,7 @@ export default function App() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-cream/50 border-2 border-primary/10 rounded-2xl px-6 py-5 text-dark focus:outline-none focus:border-primary transition-all font-medium"
+                className="w-full bg-bg/50 dark:bg-[#F7D550]/10 border-2 border-primary/10 rounded-4xl px-6 py-5 text-dark dark:text-primary/50 focus:outline-none focus:border-primary transition-all"
                 placeholder="••••••••"
                 required
                 minLength={6}
@@ -936,7 +1004,7 @@ export default function App() {
             <button
               type="submit"
               disabled={isAuthenticating}
-              className="w-full bg-primary text-cream rounded-2xl py-5 font-heading text-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl retro-shadow-pink disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-yellow-support dark:bg-[#024A34] text-primary dark:text-primary rounded-4xl py-5 font-heading text-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl retro-shadow-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isAuthenticating ? "Wait a sec..." : (authMode === "login" ? "Sign In" : "Create Account")}
             </button>
@@ -944,23 +1012,20 @@ export default function App() {
 
           <div className="relative mb-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t-2 border-primary/5"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] font-bold">
-              <span className="bg-card px-4 text-dark/20">Vintage & Sustainable</span>
+              <div className="w-full border-t-2 border-primary/10 py-3"></div>
             </div>
           </div>
 
           <button
             onClick={handleLogin}
             disabled={isAuthenticating}
-            className="w-full bg-card border-2 border-primary/10 text-primary rounded-2xl py-5 font-heading text-xl flex items-center justify-center gap-3 hover:bg-cream/50 transition-all disabled:opacity-50 shadow-md"
+            className="w-full bg-pink dark:bg-dark text-dark dark:text-text rounded-4xl py-5 font-heading text-xl flex items-center justify-center gap-3 transition-all retro-shadow-text hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
             Continue with Google
           </button>
 
-          <p className="mt-10 text-center text-dark/60 font-medium">
+          <p className="mt-10 text-center text-dark/60 dark:text-cream-support/60 font-medium">
             {authMode === "login" ? "New here?" : "Already a member?"}
             <button
               onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
@@ -978,9 +1043,16 @@ export default function App() {
     </div>
   );
 
-  const filteredOutfits = communityFilter === "all"
+  const filteredOutfits = (communityFilter === "all"
     ? outfits
-    : outfits.filter(o => followedUserIds.includes(o.authorId));
+    : outfits.filter(o => followedUserIds.includes(o.authorId))
+  ).filter(o => {
+    if (!userSearchQuery.trim()) return true;
+    const query = userSearchQuery.toLowerCase();
+    const matchesAuthor = o.authorName.toLowerCase().includes(query);
+    const matchesTags = o.tags?.some(t => t.toLowerCase().includes(query));
+    return matchesAuthor || matchesTags;
+  });
 
   return (
     <ErrorBoundary>
@@ -989,6 +1061,7 @@ export default function App() {
 
         <Sidebar
           user={user}
+          userUserProfile={userProfile}
           tier={userProfile?.tier}
           onLogout={handleLogout}
           onUpgrade={() => setIsPricingOpen(true)}
@@ -1001,22 +1074,11 @@ export default function App() {
         />
 
         <main className="md:pl-[120px] transition-all duration-300 min-h-screen">
-          {/* Logo for the header and badge */}
           <header className="sticky top-0 z-40 p-6 flex items-center justify-between pointer-events-none">
             <div className="flex items-center gap-4 pointer-events-auto px-6 py-3">
               <div className="flex items-center gap-3">
-                {/* light mode logo */}
-                <img
-                  src={logoLight}
-                  alt="Social Thrift Logo"
-                  className="h-15 w-auto object-contain dark:hidden"
-                />
-                {/* dark mode logo */}
-                <img
-                  src={logoDark}
-                  alt="Social Thrift Logo"
-                  className="h-15 w-auto object-contain dark:block hidden border-dark/10 dark:border-white/10"
-                />
+                <img src={logoLight} alt="Social Thrift Logo" className="h-15 w-auto object-contain dark:hidden" />
+                <img src={logoDark} alt="Social Thrift Logo" className="h-15 w-auto object-contain dark:block hidden border-dark/10 dark:border-white/10" />
               </div>
               <div className="h-6 w-px bg-primary/10 mx-1" />
               <div className="flex items-center gap-2">
@@ -1043,7 +1105,7 @@ export default function App() {
             </div>
           </header>
 
-          <div className="max-w-7xl mx-auto p-4 md:p-8 pb-24 md:pb-8">
+          <div className="max-w-7xl mx-auto p-4 md:p-4 pb-24 md:pb-4">
             <AnimatePresence mode="wait">
               {activeTab === "home" && (
                 <motion.div
@@ -1065,24 +1127,39 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="max-w-4xl mx-auto space-y-8"
+                  className="max-w-4xl mx-auto space-y-4 pb-16"
                 >
-                  <header className="text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold uppercase tracking-wider border border-emerald-100">
-                      <Sparkles size={14} />
-                      AI Powered
+                  {/* AI Lab Hero Banner */}
+                  <div className="relative rounded-[2.5rem] overflow-hidden mb-8 bg-light-green dark:bg-[#024A34] border-2 border-primary dark:border-yellow-support/50" style={{ minHeight: 200 }}>
+                    <div
+                      className="absolute inset-0 opacity-[0.10]"
+                      style={{
+                        backgroundImage: `
+                          repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px),
+                          repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px)
+                        `
+                      }}
+                    />
+                    <motion.div className="absolute -right-10 bottom-0 w-40 h-50 bg-primary/10 rounded-full" />
+                    <motion.div className="absolute right-30 -bottom-4 w-40 h-30 bg-primary/10 rounded-full rotate-40" />
+                    <motion.div className="absolute right-33 top-5 w-15 h-16 bg-primary/10 rounded-full" />
+                    <div className="relative z-10 p-8 md:p-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-primary dark:text-yellow-support">
+                          <GeminiIcon size={14} className="text-primary dark:text-yellow-support" />
+                          <span className="text-primary dark:text-yellow-support text-xs font-bold uppercase tracking-[0.3em]">AI Powered</span>
+                        </div>
+                        <h2 className="text-6xl md:text-7xl font-heading text-primary dark:text-yellow-support leading-none">Style Lab</h2>
+                        <p className="text-dark/70 dark:text-yellow-support text-sm font-medium max-w-lg">Discover new ways to wear your favorites and get instant thrift tips.</p>
+                      </div>
                     </div>
-                    <h2 className="text-5xl font-heading text-primary leading-tight">Style Lab</h2>
-                    <p className="text-lg text-dark/50 max-w-lg mx-auto font-medium">
-                      Discover new ways to wear your favorites and get instant thrift tips.
-                    </p>
-                  </header>
+                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
                     <div className="md:col-span-5 space-y-6">
                       <div
                         className={cn(
-                          "aspect-[3/4] rounded-[2.5rem] border-2 border-dashed border-primary/10 bg-card shadow-sm flex flex-col items-center justify-center overflow-hidden relative group transition-all hover:border-primary/20",
+                          "aspect-[3/4] rounded-[2.5rem] border-2 border-dashed border-primary/50 dark:border-light-green/80 hover:border-primary/70 dark:hover:border-light-green bg-card shadow-sm flex flex-col items-center justify-center overflow-hidden relative group transition-all",
                           aiImage && "border-none shadow-2xl"
                         )}
                       >
@@ -1100,12 +1177,11 @@ export default function App() {
                           </>
                         ) : (
                           <div className="text-center p-8 space-y-6">
-                            <div className="w-20 h-20 bg-card-hover rounded-3xl flex items-center justify-center mx-auto text-text-muted group-hover:scale-110 transition-transform">
+                            <div className="w-20 h-20 bg-primary/10 text-bg hover rounded-full flex items-center justify-center mx-auto text-text-muted group-hover:scale-110 transition-transform">
                               <Camera size={32} />
                             </div>
                             <div className="space-y-1">
                               <p className="text-xl font-bold text-text">Upload Outfit</p>
-                              <p className="text-zinc-400 text-sm font-medium">Show us your current fit</p>
                             </div>
                             <input
                               type="file"
@@ -1126,7 +1202,7 @@ export default function App() {
                             />
                             <button
                               onClick={() => fileInputRef.current?.click()}
-                              className="bg-primary text-bg px-8 py-4 rounded-2xl text-lg font-heading hover:scale-105 transition-all shadow-xl shadow-primary/20"
+                              className="bg-pink dark:bg-[#024A34] text-primary dark:text-yellow-support px-8 py-4 rounded-full text-lg font-heading hover:scale-105 transition-all retro-shadow-primary"
                             >
                               Select Image
                             </button>
@@ -1137,9 +1213,9 @@ export default function App() {
                         <button
                           onClick={handleAnalyze}
                           disabled={isAnalyzing}
-                          className="w-full bg-primary text-bg py-5 rounded-2xl font-heading text-xl flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-50 shadow-2xl shadow-primary/20"
+                          className="w-full bg-pink dark:bg-[#024A34] text-primary py-5 rounded-full font-heading text-xl flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-50 retro-shadow-primary"
                         >
-                          {isAnalyzing ? <RefreshCw className="animate-spin" /> : <Sparkles size={20} />}
+                          {isAnalyzing ? <RefreshCw className="animate-spin" /> : <GeminiIcon size={20} />}
                           {isAnalyzing ? "Analyzing Style..." : "Get Recommendations"}
                         </button>
                       )}
@@ -1148,12 +1224,11 @@ export default function App() {
                     <div className="md:col-span-7 bg-card rounded-[2.5rem] p-8 border border-border min-h-[500px] flex flex-col shadow-xl">
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
                         <div className="flex items-center gap-6">
-                          <h3 className="text-xl font-heading flex items-center gap-3 text-primary">
-                            <Sparkles className="text-emerald-500" size={24} />
+                          <h3 className="text-xl font-heading flex items-center gap-3 text-primary dark:text-yellow-support">
+                            <GeminiIcon className="text-primary dark:text-yellow-support" size={24} />
                             Style Insights
                           </h3>
 
-                          {/* Image Gen Toggle - Always Visible */}
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => {
@@ -1254,15 +1329,15 @@ export default function App() {
 
                         {recommendations ? (
                           <div className="prose prose-zinc prose-lg max-w-none">
-                            <div className="text-zinc-600 leading-relaxed font-medium">
+                            <div className="text-primary/70 leading-relaxed font-medium">
                               <ReactMarkdown>{recommendations}</ReactMarkdown>
                             </div>
                           </div>
                         ) : (
                           !isAnalyzing && (
                             <div className="h-full flex flex-col items-center justify-center text-center py-20 space-y-6">
-                              <div className="w-20 h-20 bg-card-hover rounded-full flex items-center justify-center text-text-muted">
-                                <Sparkles size={40} />
+                              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-text-muted">
+                                <GeminiIcon size={40} />
                               </div>
                               <div className="space-y-2">
                                 <p className="text-xl font-bold text-text">No Insights Yet</p>
@@ -1275,8 +1350,8 @@ export default function App() {
                         {isAnalyzing && (
                           <div className="h-full flex flex-col items-center justify-center py-20 space-y-8">
                             <div className="relative">
-                              <RefreshCw className="animate-spin text-emerald-500" size={48} />
-                              <Sparkles className="absolute -top-3 -right-3 text-amber-400 animate-pulse" size={24} />
+                              <RefreshCw className="animate-spin text-primary" size={48} />
+                              <GeminiIcon className="absolute -top-3 -right-3 text-pink animate-pulse" size={24} />
                             </div>
                             <div className="text-center space-y-2">
                               <p className="text-xl font-bold text-text">Analyzing Your Style</p>
@@ -1290,64 +1365,194 @@ export default function App() {
                 </motion.div>
               )}
 
+              {/* WARDROBE TAB */}
               {activeTab === "wardrobe" && (
                 <motion.div
                   key="wardrobe"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-12"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -16 }}
+                  className="pb-40"
                 >
-                  <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                    <div className="space-y-4">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs font-bold uppercase tracking-wider border border-orange-100">
-                        <Shirt size={14} />
-                        Personal Collection
+                  {/* Hero banner */}
+                  <div className="relative rounded-[2.5rem] overflow-hidden mb-8 bg-pink dark:bg-[#AC3B61] border-2 border-primary dark:border-pink" style={{ minHeight: 200 }}>
+                    <div
+                      className="absolute inset-0 opacity-[0.10]"
+                      style={{
+                        backgroundImage: `
+                          repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px),
+                          repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px)
+                        `
+                      }}
+                    />
+                    <motion.div className="absolute -right-10 bottom-0 w-40 h-50 bg-primary/10 dark:bg-pink/10 rounded-full" />
+                    <motion.div className="absolute right-30 -bottom-4 w-40 h-30 bg-primary/10 dark:bg-pink/10 rounded-full rotate-40" />
+                    <motion.div className="absolute right-33 top-5 w-15 h-16 bg-primary/10 dark:bg-pink/10 rounded-full" />
+                    <div className="relative z-10 p-8 md:p-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-pink">
+                          <Shirt size={14} className="text-dark dark:text-pink" />
+                          <span className="text-dark dark:text-pink text-xs font-bold uppercase tracking-[0.3em]">Personal Collection</span>
+                        </div>
+                        <h2 className="text-6xl md:text-7xl font-heading text-primary dark:text-cream-support leading-none">My Wardrobe</h2>
+                        <p className="text-dark/70 dark:text-pink text-sm font-medium">{garments.length} {garments.length === 1 ? "piece" : "pieces"} in your collection</p>
                       </div>
-                      <h2 className="text-6xl font-heading text-primary leading-none">My Wardrobe</h2>
-                      <p className="text-xl text-dark/50 font-medium max-w-xl">
-                        Your digital collection of thrifted and upcycled gems.
-                      </p>
+                      <label className="bg-primary dark:bg-cream-support text-[#FFD7E1] dark:text-[#AC3B61] px-7 py-3.5 rounded-full font-bold text-sm uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:bg-cream-support hover:text-primary dark:hover:bg-[#024A34] dark:hover:text-pink retro-shadow-wardrobe transition-all shadow-xl w-fit">
+                        <Plus size={16} strokeWidth={3} />
+                        Add Item
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAddGarment} />
+                      </label>
                     </div>
-                    <label className="bg-primary text-bg px-10 py-5 rounded-3xl font-heading text-2xl cursor-pointer flex items-center gap-3 hover:scale-105 transition-all shadow-2xl retro-shadow-pink">
-                      <Plus size={28} />
-                      Add Item
-                      <input type="file" accept="image/*" className="hidden" onChange={handleAddGarment} />
-                    </label>
-                  </header>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {garments.map((garment) => (
-                      <motion.div
-                        layout
-                        whileHover={{ y: -8 }}
-                        key={garment.id}
-                        onClick={() => setSelectedGarment(garment)}
-                        className="group relative aspect-[3/4] bg-card rounded-[2rem] overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 cursor-pointer"
-                      >
-                        <img src={garment.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Garment" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
-                          <p className="text-white font-bold text-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300">{garment.category}</p>
-                          <div className="flex gap-1 mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
-                            {garment.tags.slice(0, 2).map((tag, i) => (
-                              <span key={`${tag}-${i}`} className="text-[10px] text-white/80 font-medium">#{tag}</span>
-                            ))}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                    {garments.length === 0 && (
-                      <div className="col-span-full py-32 text-center space-y-4">
-                        <div className="w-24 h-24 bg-card-hover rounded-full flex items-center justify-center mx-auto text-text-muted">
-                          <Shirt size={48} />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-2xl font-bold text-text">Your wardrobe is empty</p>
-                          <p className="text-zinc-400">Start adding items to build your digital collection!</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
+
+                  {/* filter bar */}
+                  <div className="flex items-center gap-2 mb-6 bg-primary dark:bg-cream-support rounded-full p-1.5 border border-black/5 shadow-sm w-full">
+                    {/* scrollable category pills */}
+                    <div className="flex items-center gap-1 flex-1 overflow-x-auto scroll-smooth min-w-0">
+                      {(["all", ...Array.from(new Set(garments.map(g => g.category)))]).map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setWardrobeFilter(cat)}
+                          className={cn(
+                            "px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex-shrink-0",
+                            wardrobeFilter === cat
+                              ? "bg-pink dark:bg-[#AC3B61] text-primary dark:text-white shadow-md"
+                              : "text-light-green hover:text-pink dark:text-[#AC3B61] dark:hover:text-dark"
+                          )}
+                        >
+                          {cat === "all" ? "All Items" : cat}
+                        </button>
+                      ))}
+                    </div>
+                    {/* divider */}
+                    <div className="w-px h-5 bg-light-green/30 dark:bg-[#AC3B61]/30 flex-shrink-0 mx-1" />
+                    {/* view toggle pinned to the right */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => setWardrobeView("grid")}
+                        className={cn(
+                          "p-2.5 rounded-full transition-all",
+                          wardrobeView === "grid"
+                            ? "bg-pink dark:bg-[#AC3B61] text-primary dark:text-white shadow-sm"
+                            : "text-light-green dark:text-[#AC3B61] hover:text-pink"
+                        )}
+                      >
+                        <Grid size={15} />
+                      </button>
+                      <button
+                        onClick={() => setWardrobeView("list")}
+                        className={cn(
+                          "p-2.5 rounded-full transition-all",
+                          wardrobeView === "list"
+                            ? "bg-pink dark:bg-[#AC3B61] text-primary dark:text-white shadow-sm"
+                            : "text-light-green dark:text-[#AC3B61] hover:text-pink"
+                        )}
+                      >
+                        <List size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Items */}
+                  {(() => {
+                    const filteredGarments = garments.filter(g => wardrobeFilter === "all" || g.category === wardrobeFilter);
+                    const visibleGarments = filteredGarments.slice(0, wardrobeVisibleCount);
+
+                    if (garments.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-40 space-y-6 text-center">
+                          <div className="w-28 h-28 rounded-[2rem] bg-cream-support border border-black/5 shadow-xl flex items-center justify-center text-primary dark:text-[#AC3B61]">
+                            <Shirt size={52} />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-2xl font-bold text-primary dark:text-cream-support">Your wardrobe is empty</p>
+                            <p className="text-dark/50 dark:text-cream-support/50 text-sm">Start adding items to build your digital collection!</p>
+                          </div>
+                          <label className="bg-primary dark:bg-cream-support text-white dark:text-[#AC3B61] px-8 py-3.5 rounded-full retro-shadow-wardrobe font-bold text-sm uppercase tracking-widest cursor-pointer flex items-center gap-2 hover:bg-cream-support dark:hover:bg-[#024A34] hover:text-primary dark:hover:text-pink transition-all shadow-lg shadow-primary/20">
+                            <Plus size={16} strokeWidth={3} /> Add First Item
+                            <input type="file" accept="image/*" className="hidden" onChange={handleAddGarment} />
+                          </label>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <>
+                        <div className="pr-2">
+                          {wardrobeView === "grid" ? (
+                            // canvass ──
+                            <div className="rounded-[2rem] border-2 border-dashed border-primary/40 dark:border-cream-support/30 p-4 checkerboard max-h-[80vh] overflow-y-auto custom-scrollbar">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                                {visibleGarments.map((garment, idx) => (
+                                  <motion.div
+                                    layout
+                                    key={garment.id}
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: idx * 0.03 }}
+                                    whileHover={{ y: -6 }}
+                                    onClick={() => setSelectedGarment(garment)}
+                                    className="group relative aspect-[3/4] bg-primary dark:bg-cream-support checkerboard rounded-[1.75rem] overflow-hidden border border-primary/5 hover:shadow-2xl shadow-primary/20 dark:shadow-cream-support/20 transition-all duration-400 cursor-pointer"
+                                  >
+                                    <img src={garment.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Garment" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
+                                      <p className="text-light-green dark:text-cream-support font-bold text-sm leading-tight translate-y-2 group-hover:translate-y-0 transition-transform duration-300">{garment.category}</p>
+                                      {garment.tags.length > 0 && (
+                                        <p className="text-white/60 text-[10px] mt-0.5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75">#{garment.tags[0]}</p>
+                                      )}
+                                    </div>
+                                    <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                                      <ArrowUpRight size={12} className="text-primary" />
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2.5 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                              {visibleGarments.map((garment, idx) => (
+                                <motion.div
+                                  key={garment.id}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: idx * 0.04 }}
+                                  onClick={() => setSelectedGarment(garment)}
+                                  className="group flex items-center gap-5 bg-cream-support dark:bg-dark rounded-2xl p-4 border border-black/5 hover:border-primary/70 dark:hover:border-pink/70 hover:shadow-lg transition-all cursor-pointer"
+                                >
+                                  <div className="w-14 rounded-xl overflow-hidden flex-shrink-0 bg-zinc-50 checkerboard" style={{ height: 72 }}>
+                                    <img src={garment.imageUrl} className="w-full h-full object-cover" alt="Garment" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-primary dark:text-cream-support text-sm">{garment.category}</p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {garment.tags.slice(0, 3).map((tag, i) => (
+                                        <span key={i} className="text-[10px] font-bold text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-md border border-zinc-100">#{tag}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <ChevronRight size={16} className="text-zinc-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                                </motion.div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {filteredGarments.length > wardrobeVisibleCount && (
+                          <div className="flex justify-center mt-12 mb-8">
+                            <button
+                              onClick={() => setWardrobeVisibleCount(prev => prev + 12)}
+                              className="group relative px-10 py-5 bg-primary dark:bg-pink text-white rounded-[2rem] font-heading text-xl tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/30 flex items-center gap-4"
+                            >
+                              <div className="flex items-center justify-center transition-transform duration-700 group-hover:rotate-180">
+                                <Plus size={24} strokeWidth={3} />
+                              </div>
+                              Load More Styles
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {/* Garment Detail Modal */}
                   <AnimatePresence>
@@ -1363,10 +1568,10 @@ export default function App() {
                           initial={{ scale: 0.9, y: 20 }}
                           animate={{ scale: 1, y: 0 }}
                           exit={{ scale: 0.9, y: 20 }}
-                          className="bg-card rounded-[3rem] overflow-hidden max-w-4xl w-full flex flex-col md:flex-row shadow-2xl relative"
+                          className="bg-bg border-2 border-primary dark:border-pink rounded-[3rem] overflow-hidden max-w-4xl w-full flex flex-col md:flex-row shadow-2xl shadow-primary/20 dark:shadow-pink/20 relative"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="md:w-1/2 aspect-[3/4] bg-card-hover relative group">
+                          <div className="md:w-1/2 aspect-[3/4] bg-zinc-50 checkerboard relative group">
                             <img src={selectedGarment.imageUrl} className="w-full h-full object-cover" alt="Garment" />
                           </div>
                           <div className="md:w-1/2 p-10 lg:p-12 space-y-8 flex flex-col">
@@ -1377,12 +1582,12 @@ export default function App() {
                                     type="text"
                                     value={editGarmentData.category}
                                     onChange={(e) => setEditGarmentData({ ...editGarmentData, category: e.target.value })}
-                                    className="text-3xl font-heading text-primary bg-card-hover border border-border rounded-2xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    className="text-3xl font-heading text-primary dark:text-pink bg-card border-2 border-primary/50 dark:border-[#AC3B61]/50 rounded-2xl px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary/20"
                                   />
                                 ) : (
-                                  <h3 className="text-4xl font-heading text-primary leading-tight">{selectedGarment.category}</h3>
+                                  <h3 className="text-4xl font-heading text-primary dark:text-cream-support leading-tight">{selectedGarment.category}</h3>
                                 )}
-                                <p className="text-zinc-400 text-sm font-medium">Added {selectedGarment.createdAt && typeof selectedGarment.createdAt.toDate === "function" ? selectedGarment.createdAt.toDate().toLocaleDateString() : "Just now"}</p>
+                                <p className="text-primary/50 dark:text-cream-support/50 text-sm font-medium">Added {selectedGarment.createdAt && typeof selectedGarment.createdAt.toDate === "function" ? selectedGarment.createdAt.toDate().toLocaleDateString() : "Just now"}</p>
                               </div>
                               <div className="flex gap-2">
                                 <button
@@ -1397,11 +1602,11 @@ export default function App() {
                                       setIsEditingGarment(true);
                                     }
                                   }}
-                                  className="p-3 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-primary transition-colors"
+                                  className="p-3 hover:bg-pink/50 dark:hover:bg-cream-support/50 rounded-full text-primary dark:text-pink hover:text-primary dark:hover:text-pink transition-colors"
                                 >
                                   {isEditingGarment ? <Save size={24} /> : <Edit2 size={24} />}
                                 </button>
-                                <button onClick={() => { setSelectedGarment(null); setIsEditingGarment(false); }} className="p-3 hover:bg-zinc-100 rounded-full text-zinc-400">
+                                <button onClick={() => { setSelectedGarment(null); setIsEditingGarment(false); }} className="p-3 hover:bg-pink/50 dark:hover:bg-cream-support/50 rounded-full text-primary dark:text-pink hover:text-primary dark:hover:text-pink">
                                   <X size={28} />
                                 </button>
                               </div>
@@ -1409,7 +1614,7 @@ export default function App() {
 
                             <div className="space-y-6 flex-1">
                               <div className="space-y-3">
-                                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                <p className="text-xs font-bold uppercase tracking-widest text-primary/80 dark:text-cream-support/80 flex items-center gap-2">
                                   <Tag size={14} />
                                   Tags
                                 </p>
@@ -1418,19 +1623,19 @@ export default function App() {
                                     type="text"
                                     value={editGarmentData.tags}
                                     onChange={(e) => setEditGarmentData({ ...editGarmentData, tags: e.target.value })}
-                                    className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    placeholder="e.g., vintage, denim, blue"
+                                    className="w-full bg-cream-support dark:bg-card/50 border-2 border-primary/20 dark:border-[#AC3B61]/50 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                    placeholder="e.g., color, type, style, brand"
                                   />
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
                                     {selectedGarment.tags.length > 0 ? (
                                       selectedGarment.tags.map((tag, i) => (
-                                        <span key={`${tag}-${i}`} className="px-4 py-1.5 bg-card-hover text-text-muted rounded-full text-xs font-bold border border-border">
+                                        <span key={`${tag}-${i}`} className="px-4 py-1.5 bg-cream-support dark:bg-[#FFD7E1] text-primary dark:text-text rounded-full text-xs font-bold border border-primary/50 dark:border-cream-support/50">
                                           #{tag}
                                         </span>
                                       ))
                                     ) : (
-                                      <p className="text-zinc-400 text-sm italic">No tags added yet.</p>
+                                      <p className="text-primary/50 dark:text-cream-support/50 text-sm italic">No tags added yet.</p>
                                     )}
                                   </div>
                                 )}
@@ -1445,7 +1650,7 @@ export default function App() {
                                   setActiveTab("upcycle");
                                   setSelectedGarment(null);
                                 }}
-                                className="w-full bg-green-support text-bg py-5 rounded-2xl font-heading text-2xl flex items-center justify-center gap-3 hover:scale-[1.02] transition-all shadow-xl retro-shadow-pink"
+                                className="w-full bg-primary dark:bg-cream-support text-[#FFD7E1] dark:text-[#AC3B61] py-5 rounded-full font-heading text-2xl flex items-center justify-center gap-3 hover:bg-cream-support hover:text-primary dark:hover:bg-[#024A34] dark:hover:text-pink transition-all shadow-xl retro-shadow-wardrobe"
                               >
                                 <Video size={24} />
                                 Upcycle This Item
@@ -1454,7 +1659,7 @@ export default function App() {
                                 onClick={async () => {
                                   setItemToDelete({ id: selectedGarment.id, type: "garment" });
                                 }}
-                                className="w-full bg-red-50 text-red-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"
+                                className="w-full bg-red-500 text-cream-support py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#780000] transition-colors"
                               >
                                 <Trash2 size={20} />
                                 Remove from Wardrobe
@@ -1468,79 +1673,134 @@ export default function App() {
                 </motion.div>
               )}
 
+              {/* STYLER TAB */}
               {activeTab === "styler" && (
                 <motion.div
                   key="styler"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="space-y-12"
+                  className="space-y-8"
                 >
-                  <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                    <div className="space-y-4">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-600 text-xs font-bold uppercase tracking-wider border border-purple-100">
-                        <Layout size={14} />
-                        Creative Canvas
+                  {/* Styler Hero Banner */}
+                  <div className="relative rounded-[2.5rem] overflow-hidden mb-8 bg-green-support dark:bg-primary border-2 border-primary dark:border-dark" style={{ minHeight: 200 }}>
+                    <div
+                      className="absolute inset-0 opacity-[0.10]"
+                      style={{
+                        backgroundImage: `
+                          repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color-2) 39px, var(--grid-color-2) 40px),
+                          repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color-2) 39px, var(--grid-color-2) 40px)
+                        `
+                      }}
+                    />
+                    <motion.div className="absolute -right-10 bottom-0 w-40 h-50 bg-primary/10 dark:bg-green-support/20 rounded-full" />
+                    <motion.div className="absolute right-30 -bottom-4 w-40 h-30 bg-primary/10 dark:bg-green-support/20 rounded-full rotate-40" />
+                    <motion.div className="absolute right-33 top-5 w-15 h-16 bg-primary/10 dark:bg-green-support/20 rounded-full" />
+                    <div className="relative z-10 p-8 md:p-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-cream-support/70 dark:text-dark/60">
+                          <LayoutGrid size={14} className="text-cream-support/70 dark:text-dark/60" />
+                          <span className="text-cream-support/70 dark:text-dark/60 text-xs font-bold uppercase tracking-[0.3em]">Creative Canvas</span>
+                        </div>
+                        <h2 className="text-6xl md:text-7xl font-heading text-bg dark:text-dark leading-none">Wardrobe Styler</h2>
+                        <p className="text-cream-support/70 dark:text-dark/60 text-sm font-medium max-w-lg">Drag and drop items to create your perfect look.</p>
                       </div>
-                      <h2 className="text-6xl font-heading text-primary leading-none">Wardrobe Styler</h2>
-                      <p className="text-xl text-dark/50 font-medium max-w-xl">
-                        Drag and drop items to create your perfect look.
-                      </p>
                     </div>
-                    <div className="flex flex-wrap gap-4 items-center w-full md:w-auto">
-                      <div className="flex items-center gap-2 bg-card p-2 rounded-[2rem] border border-border shadow-lg">
+                  </div>
+
+                  {/* toolbar */}
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {/* Left group */}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {/* public / private toggle */}
+                      <div className="flex items-center gap-2 bg-card p-2 rounded-full border border-border shadow-lg">
                         <button
                           onClick={() => setIsPublicOutfit(true)}
-                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${isPublicOutfit ? "bg-primary text-bg shadow-xl" : "text-primary/40 hover:text-primary"}`}
+                          className={`px-7 py-2 rounded-full text-sm font-heading transition-all ${isPublicOutfit ? "bg-green-support text-cream-support dark:bg-primary dark:text-dark text-bg shadow-xl" : "text-primary/40 hover:text-primary"}`}
                         >
                           Public
                         </button>
                         <button
                           onClick={() => setIsPublicOutfit(false)}
-                          className={`px-8 py-3 rounded-[1.5rem] text-sm font-heading transition-all ${!isPublicOutfit ? "bg-primary text-bg shadow-xl" : "text-primary/40 hover:text-primary"}`}
+                          className={`px-7 py-2 rounded-full text-sm font-heading transition-all ${!isPublicOutfit ? "bg-green-support text-cream-support dark:bg-primary text-bg dark:text-dark shadow-xl" : "text-primary/40 hover:text-primary"}`}
                         >
                           Private
                         </button>
                       </div>
-                      <div className="flex items-center gap-4 bg-card p-3 rounded-2xl border border-border shadow-lg">
+
+                      {/* Color picker + clear */}
+                      <div className="flex items-center gap-3 bg-card px-5 py-2 rounded-full border border-border shadow-lg">
                         <input
                           type="color"
                           value={stylerBgColor}
                           onChange={(e) => setStylerBgColor(e.target.value)}
-                          className="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent"
+                          className="w-8 h-8 rounded-xl cursor-pointer border-none bg-transparent"
                           title="Canvas Background Color"
                         />
                         <button
                           onClick={() => setStylerItems([])}
-                          className="p-2 hover:bg-card-hover rounded-xl text-text-muted hover:text-red-500 transition-colors"
+                          className="p-2 hover:bg-card-hover rounded-full text-text-muted hover:text-red-500 transition-colors"
                           title="Clear Canvas"
                         >
-                          <Trash2 size={24} />
+                          <Trash2 size={20} />
                         </button>
                       </div>
-                      <button
-                        onClick={handleSaveOutfit}
-                        disabled={isSaving || stylerItems.length === 0}
-                        className="bg-primary text-bg px-10 py-5 rounded-3xl font-heading text-2xl flex items-center gap-3 hover:scale-105 transition-all disabled:opacity-50 shadow-2xl retro-shadow-pink"
-                      >
-                        {isSaving ? <RefreshCw className="animate-spin" /> : <Save size={28} />}
-                        {isPublicOutfit ? "Publish Outfit" : "Save Private"}
-                      </button>
-                    </div>
-                  </header>
 
-                  <div className="flex flex-col lg:flex-row gap-12 h-[800px]">
-                    <div className="flex-1 bg-card-hover rounded-[3rem] border-8 border-card overflow-hidden relative shadow-2xl flex items-center justify-center group">
-                      <div className="bg-card shadow-2xl border border-border" style={{ backgroundColor: stylerBgColor }}>
+                      {/* Card size */}
+                      <div className="flex bg-card p-2 rounded-[1.75rem] border border-border shadow-lg">
+                        {(["small", "medium", "large"] as const).map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setSelectedCardSize(size)}
+                            className={cn(
+                              "px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
+                              selectedCardSize === size
+                                ? "bg-green-support dark:bg-primary text-cream-support dark:text-bg shadow-md"
+                                : "text-primary/40 hover:text-primary hover:bg-primary/5"
+                            )}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right: Publish button */}
+                    <button
+                      onClick={handleSaveOutfit}
+                      disabled={isSaving || stylerItems.length === 0}
+                      className="bg-green-support dark:bg-primary text-cream-support dark:text-dark px-8 py-4 rounded-full font-heading text-xl flex items-center gap-3 hover:scale-105 transition-all disabled:opacity-50 shadow-2xl retro-shadow-pink ml-auto"
+                    >
+                      {isSaving ? <RefreshCw className="animate-spin" /> : <Save size={22} />}
+                      {isPublicOutfit ? "Publish Outfit" : "Save Private"}
+                    </button>
+                  </div>
+
+                  {/* CANVAS + PANEL ROW */}
+                  <div className="flex flex-col lg:flex-row gap-8" style={{ height: 620 }}>
+
+                    {/* CANVAS AREA */}
+                    <div className="flex-1 relative bg-card-hover rounded-[2rem] border border-border overflow-hidden shadow-2xl flex items-center justify-center">
+                      {/* Actual Konva stage — no extra rounded wrapper so corners are always visible */}
+                      <div
+                        className="shadow-2xl border border-border/50"
+                        style={{
+                          backgroundColor: stylerBgColor,
+                          width: canvasDimensions.width,
+                          height: canvasDimensions.height,
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                        }}
+                      >
                         <Stage
-                          width={800}
-                          height={800}
+                          width={canvasDimensions.width}
+                          height={canvasDimensions.height}
                           onClick={(e) => {
                             if (e.target === e.target.getStage()) setSelectedId(null);
                           }}
                         >
                           <Layer>
-                            <Rect width={800} height={800} fill={stylerBgColor} />
+                            <Rect width={canvasDimensions.width} height={canvasDimensions.height} fill={stylerBgColor} />
                             {stylerItems.map((item, i) => (
                               <URLImage
                                 key={i}
@@ -1558,97 +1818,138 @@ export default function App() {
                         </Stage>
                       </div>
 
-                      {/* Floating Controls for Selected Item */}
+                      {/* Layer controls — float top-left */}
                       <AnimatePresence>
                         {selectedId !== null && (
                           <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            className="absolute top-8 left-8 flex flex-col gap-3 bg-card/90 backdrop-blur-md p-3 rounded-[2rem] shadow-2xl border border-border z-10"
+                            className="absolute top-6 left-6 flex flex-col gap-2 bg-card/90 backdrop-blur-md p-3 rounded-[1.5rem] shadow-2xl border border-border z-10"
                           >
-                            <button
-                              onClick={() => moveItem("front")}
-                              disabled={selectedId === stylerItems.length - 1}
-                              className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
-                              title="Bring to Front"
-                            >
-                              <ChevronRight className="-rotate-90 scale-125" size={24} />
+                            <button onClick={() => moveItem("front")} disabled={selectedId === stylerItems.length - 1} className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors" title="Bring to Front">
+                              <ChevronRight className="-rotate-90 scale-125" size={20} />
                             </button>
-                            <button
-                              onClick={() => moveItem("up")}
-                              disabled={selectedId === stylerItems.length - 1}
-                              className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
-                              title="Bring Forward"
-                            >
-                              <ChevronRight className="-rotate-90" size={24} />
+                            <button onClick={() => moveItem("up")} disabled={selectedId === stylerItems.length - 1} className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors" title="Bring Forward">
+                              <ChevronRight className="-rotate-90" size={20} />
                             </button>
-                            <button
-                              onClick={() => moveItem("down")}
-                              disabled={selectedId === 0}
-                              className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
-                              title="Send Backward"
-                            >
-                              <ChevronLeft className="-rotate-90" size={24} />
+                            <button onClick={() => moveItem("down")} disabled={selectedId === 0} className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors" title="Send Backward">
+                              <ChevronLeft className="-rotate-90" size={20} />
                             </button>
-                            <button
-                              onClick={() => moveItem("back")}
-                              disabled={selectedId === 0}
-                              className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors"
-                              title="Send to Back"
-                            >
-                              <ChevronLeft className="-rotate-90 scale-125" size={24} />
+                            <button onClick={() => moveItem("back")} disabled={selectedId === 0} className="p-3 hover:bg-zinc-100 rounded-2xl text-zinc-600 disabled:opacity-30 transition-colors" title="Send to Back">
+                              <ChevronLeft className="-rotate-90 scale-125" size={20} />
                             </button>
-                            <div className="h-px bg-zinc-200 mx-3" />
-                            <button
-                              onClick={deleteStylerItem}
-                              className="p-3 hover:bg-red-50 rounded-2xl text-red-500 transition-colors"
-                              title="Remove Item"
-                            >
-                              <Trash2 size={24} />
+                            <div className="h-px bg-zinc-200 mx-2" />
+                            <button onClick={deleteStylerItem} className="p-3 hover:bg-red-50 rounded-2xl text-red-500 transition-colors" title="Remove Item">
+                              <Trash2 size={20} />
                             </button>
                           </motion.div>
                         )}
                       </AnimatePresence>
 
+                      {/* Empty state */}
                       {stylerItems.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-zinc-200 pointer-events-none">
+                        <div className="absolute inset-0 flex items-center justify-center text-zinc-300 pointer-events-none">
                           <div className="text-center space-y-4">
                             <div className="w-24 h-24 bg-card rounded-full flex items-center justify-center mx-auto shadow-xl">
-                              <Layout size={48} className="opacity-20" />
+                              <Layout size={40} className="opacity-20" />
                             </div>
-                            <p className="text-xl font-bold text-text-muted">Select items from the right to start styling</p>
+                            <p className="text-lg font-bold text-text-muted">Select items from the panel to start styling</p>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    <div className="w-full lg:w-96 bg-card rounded-[3rem] border border-border p-8 overflow-y-auto space-y-6 shadow-xl">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-text uppercase text-xs tracking-widest">Wardrobe Items</h3>
-                        <span className="text-[10px] font-bold text-text-muted bg-card-hover px-2 py-1 rounded-lg border border-border">{garments.length} items</span>
+                    {/* WARDROBE PANEL */}
+                    <div className="w-full lg:w-96 bg-card rounded-[2rem] border border-border overflow-hidden shadow-xl flex flex-col">
+                      {/* Panel header */}
+                      <div className="p-6 pb-4 border-b border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-bold text-text uppercase text-xs tracking-widest">Wardrobe Items</h3>
+                          <span className="text-[10px] font-bold text-text-muted bg-card-hover px-2 py-1 rounded-lg border border-border">{garments.length} items</span>
+                        </div>
+
+                        {/* Search */}
+                        <div className="flex items-center gap-2 bg-card-hover rounded-xl px-3 py-2.5 border border-border">
+                          <Search size={13} className="text-text-muted flex-shrink-0" />
+                          <input
+                            type="text"
+                            value={stylerSearch}
+                            onChange={(e) => setStylerSearch(e.target.value)}
+                            placeholder="Search by name or tag…"
+                            className="bg-transparent text-xs text-text placeholder:text-text-muted focus:outline-none w-full"
+                          />
+                          {stylerSearch && (
+                            <button onClick={() => setStylerSearch("")} className="text-text-muted hover:text-text transition-colors flex-shrink-0">
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Category chips */}
+                        <div className="flex gap-1.5 flex-wrap">
+                          {["all", ...Array.from(new Set(garments.map(g => g.category)))].map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => setStylerCategoryFilter(cat)}
+                              className={cn(
+                                "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
+                                stylerCategoryFilter === cat
+                                  ? "bg-green-support dark:bg-primary text-cream-support dark:text-bg shadow-sm"
+                                  : "bg-card-hover text-text-muted hover:text-text border border-border"
+                              )}
+                            >
+                              {cat === "all" ? "All" : cat}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 lg:grid-cols-2 gap-4">
-                        {garments.map((garment) => (
-                          <button
-                            key={garment.id}
-                            onClick={() => {
-                              setStylerItems([...stylerItems, {
-                                garmentId: garment.id,
-                                imageUrl: garment.imageUrl,
-                                x: 50,
-                                y: 50,
-                                width: 300,
-                                height: 300,
-                                scale: 0.5,
-                                rotation: 0
-                              }]);
-                            }}
-                            className="aspect-square rounded-2xl overflow-hidden border border-border hover:border-primary hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-lg"
-                          >
-                            <img src={garment.imageUrl} className="w-full h-full object-cover" alt="Garment" />
-                          </button>
-                        ))}
+
+                      {/* Scrollable garment grid */}
+                      <div className="flex-1 overflow-y-auto p-4">
+                        {(() => {
+                          const filtered = garments
+                            .filter(g => stylerCategoryFilter === "all" || g.category === stylerCategoryFilter)
+                            .filter(g =>
+                              !stylerSearch ||
+                              g.category.toLowerCase().includes(stylerSearch.toLowerCase()) ||
+                              g.tags.some(t => t.toLowerCase().includes(stylerSearch.toLowerCase()))
+                            );
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                                <Search size={28} className="text-text-muted opacity-30" />
+                                <p className="text-xs font-bold text-text-muted uppercase tracking-widest">No items found</p>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="grid grid-cols-3 lg:grid-cols-2 gap-3">
+                              {filtered.map((garment) => (
+                                <button
+                                  key={garment.id}
+                                  onClick={() => {
+                                    setStylerItems([...stylerItems, {
+                                      garmentId: garment.id,
+                                      imageUrl: garment.imageUrl,
+                                      x: 50,
+                                      y: 50,
+                                      width: 300,
+                                      height: 300,
+                                      scale: 0.5,
+                                      rotation: 0
+                                    }]);
+                                  }}
+                                  className="aspect-square rounded-2xl overflow-hidden border border-border hover:border-primary hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-lg"
+                                >
+                                  <img src={garment.imageUrl} className="w-full h-full object-cover" alt="Garment" />
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1656,254 +1957,25 @@ export default function App() {
               )}
 
               {activeTab === "community" && (
-                <motion.div
-                  key="community"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-12"
-                >
-                  <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                    <div className="space-y-4">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider border border-blue-100">
-                        <Users size={14} />
-                        Global Feed
-                      </div>
-                      <h2 className="text-6xl font-heading text-primary leading-none">Community Feed</h2>
-                      <p className="text-xl text-dark/50 font-medium max-w-xl">
-                        Get inspired by other stylists and share your feedback.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                      <div className="flex flex-col md:flex-row bg-card p-2 rounded-[2rem] border border-border shadow-lg w-full md:w-auto gap-2">
-                        <div className="relative flex items-center flex-1 min-w-[240px]">
-                          <Search className="absolute left-4 text-text-muted" size={18} />
-                          <input
-                            type="text"
-                            placeholder="Search stylists..."
-                            value={userSearchQuery}
-                            onChange={(e) => setUserSearchQuery(e.target.value)}
-                            className="w-full bg-card-hover border-none rounded-full pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/5 transition-all text-text"
-                          />
-                          {userSearchQuery && (
-                            <button
-                              onClick={() => setUserSearchQuery("")}
-                              className="absolute right-3 p-1 hover:bg-card-hover rounded-full transition-colors"
-                            >
-                              <X size={14} className="text-text-muted" />
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="hidden md:block w-px h-8 bg-black/5 mx-1 self-center" />
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setCommunityFilter("all")}
-                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === "all" ? "bg-primary text-bg shadow-md" : "text-primary/40 hover:text-primary hover:bg-primary/5"
-                              }`}
-                          >
-                            All Posts
-                          </button>
-                          <button
-                            onClick={() => setCommunityFilter("following")}
-                            className={`flex-1 md:flex-none px-6 py-2.5 rounded-full text-sm font-bold transition-all ${communityFilter === "following" ? "bg-primary text-bg shadow-md" : "text-primary/40 hover:text-primary hover:bg-primary/5"
-                              }`}
-                          >
-                            Following
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </header>
-
-                  <AnimatePresence>
-                    {userSearchQuery.trim() !== "" && !isSearchingUsers && userSearchResults.length === 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="text-center py-10 bg-card rounded-[3rem] border border-border shadow-xl"
-                      >
-                        <Users className="mx-auto text-text-muted mb-4 opacity-20" size={48} />
-                        <p className="text-text-muted font-medium">No stylists found matching "{userSearchQuery}"</p>
-                        <button
-                          onClick={() => setUserSearchQuery("")}
-                          className="mt-4 text-primary font-bold hover:underline"
-                        >
-                          Clear search
-                        </button>
-                      </motion.div>
-                    )}
-
-                    {userSearchResults.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="bg-card rounded-[3rem] p-8 border border-border shadow-2xl space-y-6"
-                      >
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-2xl font-heading text-primary">Stylists found</h3>
-                          <button
-                            onClick={() => setUserSearchQuery("")}
-                            className="text-sm font-bold text-zinc-400 hover:text-primary transition-colors"
-                          >
-                            Clear results
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                          {userSearchResults.map((u) => (
-                            <motion.div
-                              key={u.uid}
-                              whileHover={{ scale: 1.02 }}
-                              className="flex items-center gap-4 p-4 bg-card-hover rounded-2xl border border-border cursor-pointer group"
-                              onClick={() => {
-                                setViewingProfileId(u.uid);
-                                setActiveTab("profile");
-                                setUserSearchQuery("");
-                              }}
-                            >
-                              <img
-                                src={u.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.uid}`}
-                                className="w-14 h-14 rounded-full border-2 border-white shadow-sm group-hover:border-primary transition-colors"
-                                alt={u.displayName}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-bold text-text truncate">{u.displayName}</p>
-                                <p className="text-xs text-zinc-400 truncate">View Profile</p>
-                              </div>
-                              <ChevronRight size={18} className="text-zinc-300 group-hover:text-primary transition-colors" />
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {filteredOutfits.map((outfit) => (
-                      <motion.div
-                        layout
-                        whileHover={{ y: -8 }}
-                        key={outfit.id}
-                        className="group bg-card rounded-[3rem] border border-border overflow-hidden hover:shadow-2xl transition-all duration-500"
-                      >
-                        <div
-                          className="aspect-square relative overflow-hidden group-hover:scale-[0.98] transition-transform duration-500 rounded-[2.5rem] m-2"
-                          style={{ backgroundColor: outfit.backgroundColor || "#f4f4f5" }}
-                        >
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="relative w-full h-full">
-                              {outfit.items.map((item, i) => (
-                                <img
-                                  key={i}
-                                  src={item.imageUrl}
-                                  className="absolute shadow-lg"
-                                  style={{
-                                    left: `${(item.x / 800) * 100}%`,
-                                    top: `${(item.y / 800) * 100}%`,
-                                    width: `${((item.width || 200) / 800) * 100}%`,
-                                    height: `${((item.height || 200) / 800) * 100}%`,
-                                    transformOrigin: "0 0",
-                                    transform: `scale(${item.scaleX !== undefined ? item.scaleX : item.scale}, ${item.scaleY !== undefined ? item.scaleY : item.scale}) rotate(${item.rotation}deg)`,
-                                    objectFit: "cover",
-                                    borderRadius: "8px"
-                                  }}
-                                  alt="Outfit item"
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="p-8 space-y-6">
-                          <div className="flex items-center justify-between">
-                            <button
-                              onClick={() => {
-                                setViewingProfileId(outfit.authorId);
-                                setActiveTab("profile");
-                              }}
-                              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
-                            >
-                              <img src={outfit.authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${outfit.authorId}`} className="w-12 h-12 rounded-full border-2 border-white shadow-md" alt="Author" />
-                              <div className="text-left">
-                                <p className="font-bold text-lg text-text">{outfit.authorName}</p>
-                                <p className="text-xs text-text-muted font-medium">Stylist</p>
-                              </div>
-                            </button>
-                            <div className="flex gap-4 text-text-muted">
-                              {outfit.authorId === user?.uid && (
-                                <button
-                                  onClick={() => setItemToDelete({ id: outfit.id, type: "outfit" })}
-                                  className="p-2 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all"
-                                  title="Delete post"
-                                >
-                                  <Trash2 size={20} />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleToggleFavorite(outfit.id)}
-                                className={cn(
-                                  "flex items-center gap-1.5 p-2 rounded-xl transition-all",
-                                  favoriteIds.includes(outfit.id) ? "bg-red-50 text-red-500" : "hover:bg-red-50 hover:text-red-500"
-                                )}
-                              >
-                                <Heart size={20} fill={favoriteIds.includes(outfit.id) ? "currentColor" : "none"} />
-                                <span className="text-sm font-bold">{outfit.likesCount || 0}</span>
-                              </button>
-                              <button
-                                onClick={() => setViewingComments({ id: outfit.id, type: "outfits" })}
-                                className="flex items-center gap-1.5 p-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-500 transition-all"
-                              >
-                                <MessageSquare size={20} />
-                                <span className="text-sm font-bold">{outfit.commentsCount || 0}</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                    {outfits.length === 0 && (
-                      <div className="col-span-full py-32 text-center space-y-4">
-                        <div className="w-24 h-24 bg-card-hover rounded-full flex items-center justify-center mx-auto text-text-muted">
-                          <Users size={48} />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-2xl font-bold text-text">No outfits published yet</p>
-                          <p className="text-text-muted">Be the first to share your style with the community!</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Comments Modal */}
-                  <AnimatePresence>
-                    {viewingComments && viewingComments.type === "outfits" && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setViewingComments(null)}
-                      >
-                        <motion.div
-                          initial={{ scale: 0.9, y: 20 }}
-                          animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.9, y: 20 }}
-                          className="w-full max-w-lg"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <CommentsSection
-                            parentId={viewingComments.id}
-                            parentType="outfits"
-                            currentUser={user}
-                            onClose={() => setViewingComments(null)}
-                          />
-                        </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+                <CommunityView
+                  communityFilter={communityFilter}
+                  setCommunityFilter={setCommunityFilter}
+                  userSearchQuery={userSearchQuery}
+                  setUserSearchQuery={setUserSearchQuery}
+                  isSearchingUsers={isSearchingUsers}
+                  userSearchResults={userSearchResults}
+                  filteredOutfits={filteredOutfits}
+                  onViewProfile={(uid) => {
+                    setViewingProfileId(uid);
+                    setActiveTab("profile");
+                  }}
+                  onToggleFavorite={handleToggleFavorite}
+                  onSetViewingComments={setViewingComments}
+                  onSetItemToDelete={setItemToDelete}
+                  favoriteIds={favoriteIds}
+                  currentUser={userProfile || user}
+                  outfitsCount={outfits.length}
+                />
               )}
 
               {activeTab === "profile" && (
@@ -1974,40 +2046,25 @@ export default function App() {
               )}
 
               {activeTab === "contact" && (
-                <motion.div
-                  key="contact"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
+                <motion.div key="contact" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <ContactView />
                 </motion.div>
               )}
 
               {activeTab === "privacy" && (
-                <motion.div
-                  key="privacy"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
+                <motion.div key="privacy" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <PrivacyView />
                 </motion.div>
               )}
 
               {activeTab === "terms" && (
-                <motion.div
-                  key="terms"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                >
+                <motion.div key="terms" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <TermsView />
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Cart/Checkout Modal */}
+            {/* Delete confirmation modal */}
             <AnimatePresence>
               {itemToDelete && (
                 <motion.div
@@ -2032,10 +2089,7 @@ export default function App() {
                       <p className="text-zinc-500 mt-2">This action cannot be undone. This will permanently delete your {itemToDelete.type}.</p>
                     </div>
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => setItemToDelete(null)}
-                        className="flex-1 px-6 py-3 rounded-2xl font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
-                      >
+                      <button onClick={() => setItemToDelete(null)} className="flex-1 px-6 py-3 rounded-2xl font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">
                         Cancel
                       </button>
                       <button
@@ -2055,7 +2109,6 @@ export default function App() {
                             }
                           } else {
                             try {
-                              // Delete associated listings first
                               const listingsRef = collection(db, "listings");
                               const q = query(listingsRef, where("garmentId", "==", itemToDelete.id));
                               let listingsSnap;
@@ -2076,7 +2129,6 @@ export default function App() {
                                 await Promise.all(deletePromises);
                               }
 
-                              // Delete the garment
                               try {
                                 await deleteDoc(doc(db, "garments", itemToDelete.id));
                               } catch (error) {
@@ -2099,6 +2151,7 @@ export default function App() {
               )}
             </AnimatePresence>
 
+            {/* Cart / Checkout modal */}
             <AnimatePresence>
               {isCartOpen && (
                 <motion.div
@@ -2142,10 +2195,7 @@ export default function App() {
                                     <p className="text-text-muted text-sm">{item.category}</p>
                                     <p className="text-text font-bold mt-1">${item.price.toFixed(2)}</p>
                                   </div>
-                                  <button
-                                    onClick={() => removeFromCart(idx)}
-                                    className="p-2 text-text-muted hover:text-red-500 transition-colors self-start"
-                                  >
+                                  <button onClick={() => removeFromCart(idx)} className="p-2 text-text-muted hover:text-red-500 transition-colors self-start">
                                     <Trash2 size={18} />
                                   </button>
                                 </div>
@@ -2190,51 +2240,20 @@ export default function App() {
                           <div className="space-y-4">
                             <div className="space-y-1.5">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Cardholder Name</label>
-                              <input
-                                type="text"
-                                value={paymentData.name}
-                                onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })}
-                                className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text"
-                                placeholder="JOHN DOE"
-                              />
+                              <input type="text" value={paymentData.name} onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text" placeholder="JOHN DOE" />
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Card Number</label>
-                              <input
-                                type="text"
-                                maxLength={16}
-                                value={paymentData.cardNumber}
-                                onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, "") })}
-                                className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
-                                placeholder="0000 0000 0000 0000"
-                              />
+                              <input type="text" maxLength={16} value={paymentData.cardNumber} onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="0000 0000 0000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Expiry Date</label>
-                                <input
-                                  type="text"
-                                  maxLength={5}
-                                  value={paymentData.expiry}
-                                  onChange={(e) => {
-                                    let val = e.target.value.replace(/\D/g, "");
-                                    if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2);
-                                    setPaymentData({ ...paymentData, expiry: val });
-                                  }}
-                                  className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
-                                  placeholder="MM/YY"
-                                />
+                                <input type="text" maxLength={5} value={paymentData.expiry} onChange={(e) => { let val = e.target.value.replace(/\D/g, ""); if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2); setPaymentData({ ...paymentData, expiry: val }); }} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="MM/YY" />
                               </div>
                               <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">CVC</label>
-                                <input
-                                  type="text"
-                                  maxLength={3}
-                                  value={paymentData.cvc}
-                                  onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, "") })}
-                                  className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text"
-                                  placeholder="000"
-                                />
+                                <input type="text" maxLength={3} value={paymentData.cvc} onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="000" />
                               </div>
                             </div>
                           </div>
@@ -2243,21 +2262,14 @@ export default function App() {
 
                       {checkoutStep === "success" && (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-10">
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-100"
-                          >
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-100">
                             <CheckCircle2 size={40} />
                           </motion.div>
                           <div className="space-y-2">
                             <h4 className="text-2xl font-bold text-text">Order Confirmed!</h4>
                             <p className="text-text-muted">Your sustainable style is on its way.</p>
                           </div>
-                          <button
-                            onClick={() => { setIsCartOpen(false); setCheckoutStep("cart"); setActiveTab("profile"); }}
-                            className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold"
-                          >
+                          <button onClick={() => { setIsCartOpen(false); setCheckoutStep("cart"); setActiveTab("profile"); }} className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold">
                             View Order History
                           </button>
                         </div>
@@ -2270,28 +2282,14 @@ export default function App() {
                           <span className="text-text-muted font-medium">Total Amount</span>
                           <span className="text-text font-bold">${cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
                         </div>
-
                         {checkoutStep === "cart" ? (
-                          <button
-                            onClick={() => setCheckoutStep("payment")}
-                            className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg"
-                          >
-                            Proceed to Payment
-                            <ChevronRight size={20} />
+                          <button onClick={() => setCheckoutStep("payment")} className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg">
+                            Proceed to Payment <ChevronRight size={20} />
                           </button>
                         ) : (
                           <div className="flex gap-3">
-                            <button
-                              onClick={() => setCheckoutStep("cart")}
-                              className="flex-1 bg-card text-text-muted py-4 rounded-2xl font-bold border border-border hover:bg-card-hover transition-all"
-                            >
-                              Back
-                            </button>
-                            <button
-                              onClick={handleCheckout}
-                              disabled={isCheckingOut || !paymentData.cardNumber || !paymentData.expiry || !paymentData.cvc}
-                              className="flex-[2] bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50"
-                            >
+                            <button onClick={() => setCheckoutStep("cart")} className="flex-1 bg-card text-text-muted py-4 rounded-2xl font-bold border border-border hover:bg-card-hover transition-all">Back</button>
+                            <button onClick={handleCheckout} disabled={isCheckingOut || !paymentData.cardNumber || !paymentData.expiry || !paymentData.cvc} className="flex-[2] bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50">
                               {isCheckingOut ? <RefreshCw className="animate-spin mx-auto" /> : "Pay Now"}
                             </button>
                           </div>
@@ -2303,66 +2301,171 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            {/* Fullscreen Image Modal */}
+            {/* Outfit / Content detail modal */}
             <AnimatePresence>
-              {viewingOutfit && (
+              {(viewingOutfit || viewingComments) && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
-                  onClick={() => setViewingOutfit(null)}
+                  className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4"
+                  onClick={() => { setViewingOutfit(null); setViewingComments(null); }}
                 >
-                  <div className="absolute top-4 right-4 z-10">
-                    <button
-                      onClick={() => setViewingOutfit(null)}
-                      className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors backdrop-blur-md"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
                   <motion.div
-                    initial={{ scale: 0.9 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0.9 }}
-                    className="relative w-full max-w-4xl aspect-square bg-card rounded-3xl overflow-hidden shadow-2xl"
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-bg border-4 border-primary/20 rounded-[4rem] overflow-hidden max-w-6xl w-full flex flex-col md:flex-row shadow-2xl relative h-[90vh]"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: viewingOutfit.backgroundColor || "#ffffff" }}>
-                      <div className="relative w-full h-full">
-                        {viewingOutfit.items.map((item, i) => (
-                          <img
-                            key={i}
-                            src={item.imageUrl}
-                            className="absolute"
-                            style={{
-                              left: `${(item.x / 800) * 100}%`,
-                              top: `${(item.y / 800) * 100}%`,
-                              width: `${((item.width || 200) / 800) * 100}%`,
-                              height: `${((item.height || 200) / 800) * 100}%`,
-                              transformOrigin: "0 0",
-                              transform: `scale(${item.scaleX !== undefined ? item.scaleX : item.scale}, ${item.scaleY !== undefined ? item.scaleY : item.scale}) rotate(${item.rotation}deg)`,
-                              objectFit: "cover",
-                              borderRadius: "4px"
-                            }}
-                            alt="Outfit item"
+                    <div
+                      className="md:w-3/5 relative group flex items-center justify-center overflow-hidden border-r border-border"
+                      style={{
+                        backgroundColor: (() => {
+                          const o = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
+                          return o?.backgroundColor || '#111110';
+                        })()
+                      }}
+                    >
+                      {(viewingOutfit || viewingComments?.type === 'outfits') ? (() => {
+                        const currentOutfit = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
+                        if (!currentOutfit) {
+                          return (
+                            <div className="flex flex-col items-center gap-4 p-8">
+                              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary" />
+                              <p className="text-text-muted text-xs font-bold uppercase tracking-widest">Retrieving Style...</p>
+                            </div>
+                          );
+                        }
+
+                        if (currentOutfit.previewUrl) {
+                          return <img src={currentOutfit.previewUrl} className="w-full h-full object-contain" alt="Outfit preview" referrerPolicy="no-referrer" />;
+                        }
+
+                        return (
+                          <div className="absolute inset-0" style={{ backgroundColor: currentOutfit.backgroundColor || '#ffffff' }}>
+                            {currentOutfit.items.map((item: any, i: number) =>
+                              item.imageUrl ? (
+                                <img
+                                  key={i}
+                                  src={item.imageUrl}
+                                  referrerPolicy="no-referrer"
+                                  alt="Outfit item"
+                                  style={{
+                                    position: 'absolute',
+                                    left: `${(item.x / 800) * 100}%`,
+                                    top: `${(item.y / 800) * 100}%`,
+                                    width: `${((item.width || 200) / 800) * 100}%`,
+                                    height: `${((item.height || 200) / 800) * 100}%`,
+                                    transformOrigin: '0 0',
+                                    transform: `scale(${item.scaleX ?? item.scale ?? 1}, ${item.scaleY ?? item.scale ?? 1}) rotate(${item.rotation ?? 0}deg)`,
+                                    objectFit: 'cover',
+                                    borderRadius: 4,
+                                  }}
+                                />
+                              ) : null
+                            )}
+                          </div>
+                        );
+                      })() : (
+                        <div className="flex items-center justify-center h-full">
+                          <MessageSquare size={64} className="text-primary opacity-20" />
+                        </div>
+                      )}
+
+                      {(viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id)) && (
+                        <button
+                          onClick={() => {
+                            const o = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
+                            if (o) downloadOutfit(o);
+                          }}
+                          className="absolute bottom-8 right-8 p-5 bg-white/90 backdrop-blur-md text-primary rounded-[2rem] shadow-2xl hover:scale-110 active:scale-95 transition-all z-10"
+                        >
+                          <Download size={28} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="md:w-2/5 flex flex-col h-full bg-[#111110] text-[#E9E3FF]">
+                      <div className="p-8 border-b border-white/10 space-y-6">
+                        <div className="flex justify-between items-start">
+                          {(() => {
+                            const currentObject = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
+                            if (!currentObject) return null;
+                            return (
+                              <button
+                                onClick={() => {
+                                  setViewingProfileId(currentObject.authorId);
+                                  setActiveTab("profile");
+                                  setViewingOutfit(null);
+                                  setViewingComments(null);
+                                }}
+                                className="flex items-center gap-4 group/author"
+                              >
+                                <img
+                                  src={(currentObject.authorId === user?.uid ? user.photoURL : currentObject.authorPhoto) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentObject.authorId}`}
+                                  className="w-14 h-14 rounded-full border-2 border-white/20 shadow-xl group-hover/author:scale-105 transition-transform"
+                                  alt="Author"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className="text-left">
+                                  <p className="font-heading text-xl text-white leading-tight">
+                                    {currentObject.authorId === user?.uid ? (user.displayName || currentObject.authorName) : currentObject.authorName}
+                                  </p>
+                                  <p className="text-[10px] text-primary/50 font-bold uppercase tracking-[0.2em]">Verified Stylist</p>
+                                </div>
+                              </button>
+                            );
+                          })()}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setViewingOutfit(null); setViewingComments(null); }}
+                            className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-white/50 transition-all"
+                          >
+                            <X size={24} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const currentId = viewingOutfit?.id || temporaryOutfit?.id || viewingComments?.id;
+                            if (!currentId) return null;
+                            const curr = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === currentId);
+                            const likes = curr?.likesCount || 0;
+                            const isLiked = favoriteIds.includes(currentId);
+                            return (
+                              <button
+                                onClick={() => handleToggleFavorite(currentId)}
+                                className={cn(
+                                  "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg",
+                                  isLiked ? "bg-red-500 text-white" : "bg-white/5 text-white/50 hover:bg-white/10 border border-white/10"
+                                )}
+                              >
+                                <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
+                                <span className="text-sm">{likes}</span>
+                              </button>
+                            );
+                          })()}
+
+                          <div className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-white/5 text-white/50 border border-white/10 shadow-lg">
+                            <MessageSquare size={20} />
+                            <span className="text-sm">
+                              {viewingOutfit?.commentsCount || temporaryOutfit?.commentsCount || outfits.find(o => o.id === viewingComments?.id)?.commentsCount || 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-hidden flex flex-col">
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                          <CommentsSection
+                            parentId={(viewingOutfit?.id || viewingComments?.id)!}
+                            parentType={(viewingComments?.type || "outfits") as "outfits" | "tutorials"}
+                            currentUser={userProfile || user}
                           />
-                        ))}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        downloadOutfit(viewingOutfit);
-                      }}
-                      className="bg-card text-text px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-card-hover transition-colors shadow-xl border border-border"
-                    >
-                      <Download size={20} />
-                      Download Outfit
-                    </button>
-                  </div>
                 </motion.div>
               )}
 
@@ -2375,10 +2478,7 @@ export default function App() {
                   onClick={() => setFullscreenImage(null)}
                 >
                   <div className="absolute top-4 right-4 z-10">
-                    <button
-                      onClick={() => setFullscreenImage(null)}
-                      className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors backdrop-blur-md"
-                    >
+                    <button onClick={() => setFullscreenImage(null)} className="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors backdrop-blur-md">
                       <X size={24} />
                     </button>
                   </div>
@@ -2392,12 +2492,7 @@ export default function App() {
                     onClick={(e) => e.stopPropagation()}
                   />
                   <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4">
-                    <a
-                      href={fullscreenImage}
-                      download="style-recommendation.png"
-                      className="bg-card text-text px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-card-hover transition-colors shadow-xl border border-border"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <a href={fullscreenImage} download="style-recommendation.png" className="bg-card text-text px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-card-hover transition-colors shadow-xl border border-border" onClick={(e) => e.stopPropagation()}>
                       <Download size={20} />
                       Download Result
                     </a>
@@ -2408,31 +2503,17 @@ export default function App() {
 
             <AnimatePresence>
               {croppingImage && (
-                <CropModal
-                  image={croppingImage}
-                  onCropComplete={handleCropComplete}
-                  onClose={() => setCroppingImage(null)}
-                />
+                <CropModal image={croppingImage} onCropComplete={handleCropComplete} onClose={() => setCroppingImage(null)} />
               )}
             </AnimatePresence>
 
             <AnimatePresence>
               {isPricingOpen && (
-                <PricingModal
-                  isOpen={isPricingOpen}
-                  onClose={() => setIsPricingOpen(false)}
-                  onUpgrade={handleUpgrade}
-                  currentTier={userProfile?.tier || "basic"}
-                />
+                <PricingModal isOpen={isPricingOpen} onClose={() => setIsPricingOpen(false)} onUpgrade={handleUpgrade} currentTier={userProfile?.tier || "basic"} />
               )}
             </AnimatePresence>
 
-            <RatingModal
-              isOpen={!!ratingTarget}
-              onClose={() => setRatingTarget(null)}
-              onSubmit={handleRatingSubmit}
-              targetName={ratingTarget?.sellerName || ""}
-            />
+            <RatingModal isOpen={!!ratingTarget} onClose={() => setRatingTarget(null)} onSubmit={handleRatingSubmit} targetName={ratingTarget?.sellerName || ""} />
 
             <AnimatePresence>
               {limitReached && (
@@ -2457,22 +2538,13 @@ export default function App() {
                     <p className="text-zinc-500 mb-8">
                       {limitReached === "wardrobe"
                         ? "Basic users can store up to 10 items. Upgrade to Premium for unlimited space!"
-                        : "You\"ve used your daily style insights. Upgrade to Premium for unlimited AI power!"}
+                        : "You've used your daily style insights. Upgrade to Premium for unlimited AI power!"}
                     </p>
                     <div className="space-y-3">
-                      <button
-                        onClick={() => {
-                          setLimitReached(null);
-                          setIsPricingOpen(true);
-                        }}
-                        className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
-                      >
+                      <button onClick={() => { setLimitReached(null); setIsPricingOpen(true); }} className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200">
                         View Premium Plans
                       </button>
-                      <button
-                        onClick={() => setLimitReached(null)}
-                        className="w-full bg-zinc-100 text-zinc-600 py-4 rounded-2xl font-bold hover:bg-zinc-200 transition-all"
-                      >
+                      <button onClick={() => setLimitReached(null)} className="w-full bg-zinc-100 text-zinc-600 py-4 rounded-2xl font-bold hover:bg-zinc-200 transition-all">
                         Close
                       </button>
                     </div>
@@ -2481,6 +2553,7 @@ export default function App() {
               )}
             </AnimatePresence>
           </div>
+          <div className="h-20" />
           <Footer onNavigate={(tab: any) => {
             setActiveTab(tab);
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2490,5 +2563,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-// pls kill me now, this is inducing my migraine so baddd.
-// bruh eriel can you split this file if possible, its too long lmao.
+
+// i hate typescript but it hates me more

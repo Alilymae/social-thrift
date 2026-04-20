@@ -8,6 +8,7 @@
   src: url("assets/fonts/ashford-bold.otf") format("truetype");
   font-weight: bold;
 }
+
 @font-face {
   font-family: "Maleah";
   src: url("assets/fonts/Maleah-Regular.otf") format("truetype");
@@ -15,9 +16,10 @@
 }
 
 @theme {
-  --font-heading: "Tan-Ashford-Bold", serif; 
+  --font-heading: "Tan-Ashford-Bold", serif;
   --font-body: "Scheherazade New", serif;
-  --font-accent: "Homemade Apple", cursive; /* I think this is better than maleah */
+  --font-accent: "Homemade Apple", cursive;
+  /* I think this is better than maleah */
   --font-complementary: "Playfair Display", serif;
   --font-alt: "Maleah", cursive;
 
@@ -29,7 +31,7 @@
   --color-dark: #383A43;
   --color-dark-green: #00412D;
   --color-light-green: #ADDFA7;
-  
+
   --color-green-support: #3D7337;
   --color-yellow-support: #F7D550;
   --color-cream-support: #FBF6EE;
@@ -56,12 +58,18 @@
   --sidebar-icon: #FFACC1;
   --sidebar-hover-bg: #FFACC1;
   --sidebar-hover-text: #024A34;
-  
+
   --shadow-default: #000000;
   --shadow-pink: #FFACC1;
   --shadow-primary: #024A34;
   --shadow-orange: #FFBD59;
   --shadow-text: #383A43;
+  --shadow-wardrobe: #FF6B9D;
+  --shadow-marketplace: #F5E8D5;
+  --shadow-upcycle: #3B3346;
+
+  --grid-color: #024A34;
+  --grid-color-2: #F5E8D5;
 }
 
 .dark {
@@ -76,50 +84,84 @@
   --sidebar-icon: #FFBD59;
   --sidebar-hover-bg: #FFBD59;
   --sidebar-hover-text: #1A1B1E;
-  
+
   --shadow-default: #000000;
   --shadow-pink: #FF6B9D;
   --shadow-primary: #FFBD59;
   --shadow-orange: #FFBD59;
   --shadow-text: #F5E8D5;
+  --shadow-wardrobe: #FFACC1;
+  --shadow-marketplace: #383A43;
+  --shadow-upcycle: #F5E8D5;
+
+  --grid-color: #FFACC1;
+  --grid-color-2: #383A43;
 }
 
-.retro-shadow-orange{
+.retro-shadow-orange {
   box-shadow: 7px 7px 0px #FFBD59;
 }
-.retro-shadow-green{
+
+.retro-shadow-marketplace {
+  box-shadow: 7px 7px 0px var(--shadow-marketplace);
+}
+
+.retro-shadow-upcycle {
+  box-shadow: 7px 7px 0px var(--shadow-upcycle);
+}
+
+.retro-shadow-green {
   box-shadow: 7px 7px 0px #024A34;
 }
-.retro-shadow-dark{
+
+.retro-shadow-dark {
   box-shadow: 7px 7px 0px #383A43;
 }
+
 .retro-shadow-pink {
-  box-shadow: 7px 7px 0px var(--shadow-pink); 
+  box-shadow: 7px 7px 0px var(--shadow-pink);
 }
+
 .retro-shadow-primary {
-  box-shadow: 7px 7px 0px var(--shadow-primary); 
+  box-shadow: 7px 7px 0px var(--shadow-primary);
 }
+
 .retro-shadow-text {
-  box-shadow: 7px 7px 0px var(--shadow-text); 
+  box-shadow: 7px 7px 0px var(--shadow-text);
+}
+
+.retro-shadow-wardrobe {
+  box-shadow: 7px 7px 0px var(--shadow-wardrobe);
 }
 
 @layer base {
   body {
     @apply font-body bg-bg text-text overflow-x-hidden;
   }
+
   html {
     scroll-behavior: auto !important;
   }
+
   /* Hide scrollbar for Chrome, Safari and Opera */
   ::-webkit-scrollbar {
     display: none;
   }
+
   /* Hide scrollbar for IE, Edge and Firefox */
   * {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading tracking-tight text-text;
   }
 }
@@ -172,6 +214,33 @@
 }
 
 @keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(100px, 50px) scale(1.2); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(100px, 50px) scale(1.2);
+  }
+}
+
+.checkerboard {
+  background-image:
+    linear-gradient(0deg, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.dark .checkerboard {
+  background-image:
+    linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+}
+
+.masonry-grid {
+  display: flex !important;
+  width: auto;
+}
+
+.masonry-grid_column {
+  background-clip: padding-box;
 }

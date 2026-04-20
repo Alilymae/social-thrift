@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { db, handleFirestoreError, OperationType } from "../firebase";
-import { 
-  collection, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
   onSnapshot,
   serverTimestamp,
   where,
@@ -23,7 +23,7 @@ import { Tutorial } from "../types";
 import { CommentsSection } from "./CommentsSection";
 import { cn } from "../utils/cn";
 import { compressImage } from "../utils/image";
- 
+
 interface TutorialOutput {
   id: string;
   tutorialId: string;
@@ -33,13 +33,30 @@ interface TutorialOutput {
   imageUrl: string;
   createdAt: any;
 }
- 
+
 interface UpcycleLabProps {
   user: User;
   initialTag?: string;
   onViewProfile?: (userId: string) => void;
 }
- 
+
+const getYouTubeThumbnail = (url: string) => {
+  if (!url) return null;
+
+  if (url.includes("youtube.com") || url.includes("youtu.be")) {
+    const id = url.includes("v=")
+      ? url.split("v=")[1].split("&")[0]
+      : url.split("/").pop();
+
+    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  }
+
+  return null;
+};
+
+const isImageUrl = (url: string) =>
+  url?.match(/\.(jpeg|jpg|png|webp|gif)$/i);
+
 export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps) => {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +75,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
   });
   const [viewingComments, setViewingComments] = useState<string | null>(null);
   const [likedTutorials, setLikedTutorials] = useState<string[]>([]);
- 
+
   useEffect(() => {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
@@ -69,7 +86,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
     }, (error) => handleFirestoreError(error, OperationType.GET, `users/${user.uid}`));
     return () => unsubscribe();
   }, [user]);
- 
+
   useEffect(() => {
     let q = query(collection(db, "tutorials"), orderBy("createdAt", "desc"));
     if (searchTag) {
@@ -87,7 +104,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
     }, (error) => handleFirestoreError(error, OperationType.GET, "tutorials"));
     return () => unsubscribe();
   }, [searchTag]);
- 
+
   useEffect(() => {
     if (!selectedTutorial) { setOutputs([]); return; }
     const q = query(collection(db, "tutorial_outputs"), where("tutorialId", "==", selectedTutorial.id));
@@ -98,7 +115,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
     }, (error) => handleFirestoreError(error, OperationType.GET, "tutorial_outputs"));
     return () => unsubscribe();
   }, [selectedTutorial]);
- 
+
   const handlePostTutorial = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -118,7 +135,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
       handleFirestoreError(error, OperationType.CREATE, "tutorials");
     }
   };
- 
+
   const handleToggleLike = async (e: React.MouseEvent, tutorialId: string) => {
     e.stopPropagation();
     if (!user) return;
@@ -132,7 +149,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
       handleFirestoreError(error, OperationType.UPDATE, `tutorials/${tutorialId}`);
     }
   };
- 
+
   const handlePostOutput = async () => {
     if (!selectedTutorial || !outputImage) return;
     setIsUploadingOutput(true);
@@ -152,7 +169,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
       setIsUploadingOutput(false);
     }
   };
- 
+
   const handleDeleteOutput = async (outputId: string) => {
     try {
       await deleteDoc(doc(db, "tutorial_outputs", outputId));
@@ -160,7 +177,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
       handleFirestoreError(error, OperationType.DELETE, `tutorial_outputs/${outputId}`);
     }
   };
- 
+
   const renderVideo = (url: string) => {
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
       const id = url.includes("v=") ? url.split("v=")[1].split("&")[0] : url.split("/").pop();
@@ -177,74 +194,78 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
     }
     return <video src={url} controls className="w-full aspect-video bg-black" />;
   };
- 
+
   // Alternating card sizes for editorial feel
   const cardSizes = ["lg", "sm", "sm", "lg", "sm", "lg"];
- 
+
   return (
     <div className="min-h-screen dark:bg-transparent">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden border-b border-dark dark:border-white/10">
-        {/* Background texture */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FBF6EE' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }} />
- 
-        <div className="relative px-8 pt-16 pb-12">
-          <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between">
-            <div className="space-y-6 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink/30 dark:bg-pink/20 text-dark dark:text-cream-support text-xs font-bold uppercase tracking-wider border border-pink dark:border-pink">
-                <Scissors size={14} />
-                <span className="text-dark dark:text-cream-support text-xs font-bold uppercase tracking-[0.3em]">Creative Studio</span>
+      {/* Upcycle Hero Banner */}
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-8 bg-[#B1A1ED] dark:bg-[#3B3346] border-2 border-primary dark:border-[#B1A1ED]" style={{ minHeight: 200 }}>
+        <div
+          className="absolute inset-0 opacity-[0.10]"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px),
+              repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px)
+            `
+          }}
+        />
+        <motion.div className="absolute -right-10 bottom-0 w-40 h-50 bg-primary/10 dark:bg-[#B1A1ED]/10 rounded-full" />
+        <motion.div className="absolute right-30 -bottom-4 w-40 h-30 bg-primary/10 dark:bg-[#B1A1ED]/10 rounded-full rotate-40" />
+        <motion.div className="absolute right-33 top-5 w-15 h-16 bg-primary/10 dark:bg-[#B1A1ED]/10 rounded-full" />
+        <div className="relative z-10 p-8 md:p-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 text-primary dark:text-[#B1A1ED]">
+                <Scissors size={14} className="text-primary dark:text-[#B1A1ED]" />
+                <span className="text-primary dark:text-[#B1A1ED] text-xs font-bold uppercase tracking-[0.3em]">Creative Studio</span>
               </div>
-              <h1 className="text-7xl lg:text-8xl font-black text-purple-support dark:text-white leading-[0.9]">
-                UPCYCLE
-                <span className="text-primary dark:text-pink ml-5">LAB</span>
+              <h1 className="text-6xl md:text-7xl font-heading text-primary dark:text-cream-support leading-none">
+                Upcycle Lab
               </h1>
-              <p className="text-dark font-medium dark:text-cream-support text-lg font-light max-w-md leading-relaxed">
-                Transform what you have into what you love. Learn, share, and inspire the community.
-              </p>
+              <p className="text-dark/70 dark:text-[#B1A1ED] text-sm font-medium max-w-md">Transform what you have into what you love. Learn, share, and inspire the community.</p>
             </div>
- 
-            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto lg:pb-2">
+            
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/50 dark:text-purple-support" size={16} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 dark:text-[#B1A1ED]/60" size={16} />
                 <input
                   type="text"
                   placeholder="Search tags..."
                   value={searchTag}
                   onChange={(e) => setSearchTag(e.target.value)}
-                  className="bg-pink/10 dark:bg-[#E9E3FF]/80 border border-primary/50 dark:border-purple-support rounded-4xl pl-10 pr-4 py-3.5 text-sm text-dark dark:text-dark placeholder-primary/50 dark:placeholder-purple-support focus:outline-none focus:border-purple-support transition-all w-full sm:w-56"
+                  className="bg-card/80 backdrop-blur-md border border-border rounded-full pl-10 pr-4 py-3 text-sm text-text placeholder-primary/40 dark:placeholder-lavender-support/40 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all w-full sm:w-56"
                 />
               </div>
               {/* Share Button */}
               <button
                 onClick={() => setIsUploading(true)}
-                className="group relative retro-shadow-green dark:retro-shadow-orange font-medium bg-[#8D77AB] dark:bg-pink hover:bg-[#625476] dark:hover:bg-[#AC3B61] text-bg px-8 py-3.5 rounded-4xl font-dark dark:font-dark text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-300 ease-in-out"
+                className="bg-primary dark:bg-[#B1A1ED] text-bg dark:text-dark px-8 py-3 rounded-full font-heading text-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl retro-shadow-upcycle"
               >
-                <Plus size={16} strokeWidth={3} />
+                <Plus size={18} />
                 Share Tutorial
               </button>
             </div>
           </div>
- 
-          {/* Stats row */}
-          <div className="flex gap-8 mt-10 pt-8 border-t border-primary dark:border-white/5">
-            {[
-              { label: "Tutorials", value: tutorials.length },
-              { label: "Makers", value: "∞" },
-              { label: "Inspired", value: "100%" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <div className="text-2xl font-alt text-dark dark:text-white">{stat.value}</div>
-                <div className="text-primary/50 dark:text-cream-support/20 font-alt text-xs uppercase tracking-widest mt-0.5">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
- 
+
+      {/* Stats row moved outside */}
+      <div className="px-8 flex gap-10 mt-4 pb-8 border-b border-primary/10 dark:border-white/5">
+        {[
+          { label: "Tutorials", value: tutorials.length },
+          { label: "Makers", value: "∞" },
+          { label: "Inspired", value: "100%" },
+        ].map((stat) => (
+          <div key={stat.label}>
+            <div className="text-3xl font-alt text-primary dark:text-white leading-none">{stat.value}</div>
+            <div className="text-primary/40 dark:text-cream-support/40 font-alt text-[10px] uppercase tracking-widest mt-1">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Tutorial Grid */}
       <div className="px-8 py-12">
         {loading ? (
@@ -270,58 +291,72 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                 >
                   <div className="relative bg-dark-green dark:bg-[#1a1a18] border border-dark-green dark:border-white/50 rounded-2xl overflow-hidden hover:border-[#DDFFE2] dark:hover:border-[#E9E3FF] transition-all duration-500 hover:shadow-2xl hover:shadow-primary dark:hover:shadow-[#E9E3FF]/10">
                     {/* Thumbnail area */}
-                    <div className={cn(
-                      "relative overflow-hidden bg-cream-support/20 flex items-center justify-center",
-                      isTall ? "aspect-[4/5]" : "aspect-video"
-                    )}>
-                      {tutorial.videoUrl ? (   
-                        <>
-                          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#B1A1ED]/30 to-[#8D77AB]/70 dark:via-pink/20 dark:to-[#FF86A4]/40" />
-                          <div className="w-16 h-16 rounded-full border-2 border-[#E9E3FF]/40 flex items-center justify-center group-hover:border-[#DDFFE2] dark:group-hover:border-[#E9E3FF] group-hover:scale-110 transition-all duration-500">
-                            <Play size={24} className="text-[#E9E3FF]/40 group-hover:text-[#DDFFE2] dark:group-hover:text-[#E9E3FF] transition-colors ml-1" fill="currentColor" />
-                          </div>
-                        </>
-                      ) : (
-                        <Scissors size={32} className="text-white/10" />
+                    {/* Thumbnail area */}
+                    <div
+                      className={cn(
+                        "relative overflow-hidden bg-cream-support/20 flex items-center justify-center",
+                        isTall ? "aspect-[4/5]" : "aspect-video"
                       )}
- 
-                      {/* Top actions */}
-                      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {tutorial.authorId === user.uid && (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (confirm("Delete this tutorial?")) {
-                                try { await deleteDoc(doc(db, "tutorials", tutorial.id)); }
-                                catch (error) { handleFirestoreError(error, OperationType.DELETE, `tutorials/${tutorial.id}`); }
-                              }
-                            }}
-                            className="w-8 h-8 bg-black/60 backdrop-blur-sm text-red-400 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        )}
-                        <button
-                          onClick={(e) => handleToggleLike(e, tutorial.id)}
-                          className={cn(
-                            "w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-all",
-                            isLiked ? "bg-red-500 text-white" : "bg-black/60 text-white/50 hover:text-red-400"
-                          )}
-                        >
-                          <Heart size={13} fill={isLiked ? "currentColor" : "none"} />
-                        </button>
+                    >
+                      {(() => {
+                        const url = tutorial.videoUrl;
+                        const ytThumb = getYouTubeThumbnail(url);
+
+                        // YouTube thumbnail
+                        if (ytThumb) {
+                          return (
+                            <img
+                              src={ytThumb}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              alt="video thumbnail"
+                            />
+                          );
+                        }
+
+                        // Image post thumbnail
+                        if (isImageUrl(url)) {
+                          return (
+                            <img
+                              src={url}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              alt="image thumbnail"
+                            />
+                          );
+                        }
+
+                        // fallback
+                        return (
+                          <div className="flex items-center justify-center w-full h-full">
+                            <Scissors size={32} className="text-white/10" />
+                          </div>
+                        );
+                      })()}
+
+                      {/* overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#B1A1ED]/30 to-[#8D77AB]/70 dark:via-pink/20 dark:to-lavender-support/40" />
+
+                      {/* play button */}
+                      <div className="absolute w-16 h-16 rounded-full border-2 border-[#E9E3FF]/40 flex items-center justify-center group-hover:border-[#DDFFE2] dark:group-hover:border-[#E9E3FF] group-hover:scale-110 transition-all duration-500">
+                        <Play
+                          size={24}
+                          className="text-[#E9E3FF]/40 group-hover:text-[#DDFFE2] dark:group-hover:text-[#E9E3FF] transition-colors ml-1"
+                          fill="currentColor"
+                        />
                       </div>
- 
+
                       {/* Tags overlay */}
                       <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
                         {tutorial.tags.slice(0, 2).map((tag, i) => (
-                          <span key={`${tag}-${i}`} className="bg-black/50 backdrop-blur-sm  text-[#E9E3FF]/70 dark:text-cream-support/70 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border border-black/10">
+                          <span
+                            key={`${tag}-${i}`}
+                            className="bg-black/50 backdrop-blur-sm text-[#E9E3FF]/70 dark:text-cream-support/70 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider border border-black/10"
+                          >
                             {tag}
                           </span>
                         ))}
                       </div>
                     </div>
- 
+
                     {/* Card body */}
                     <div className="p-5">
                       <div className="flex items-start justify-between gap-3">
@@ -337,7 +372,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                           <ArrowUpRight size={14} className="text-white/30 group-hover:text-black transition-colors" />
                         </div>
                       </div>
- 
+
                       {/* Author + stats */}
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-cream-support/10">
                         <button
@@ -353,7 +388,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                           </div>
                           <span className="text-[#E9E3FF]/50 dark:text-cream-support/50 text-xs font-medium truncate max-w-[80px]">{tutorial.authorName}</span>
                         </button>
- 
+
                         <div className="flex items-center gap-3 text-[#E9E3FF]/50 dark:text-cream-support/50 text-xs font-bold">
                           <span className="flex items-center gap-1">
                             <Heart size={11} className={isLiked ? "text-red-400" : ""} />
@@ -389,7 +424,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
           </div>
         )}
       </div>
- 
+
       {/* Upload Modal */}
       <AnimatePresence>
         {isUploading && (
@@ -408,8 +443,8 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
               onClick={(e) => e.stopPropagation()}
             >
               {/* top accent */}
-              <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary dark:via-pink to-transparent" />
- 
+              <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary dark:via-lavender-support to-transparent" />
+
               <div className="flex justify-between items-center mb-5">
                 <div>
                   <h3 className="text-3xl font-black text-primary dark:text-cream-support tracking-tight">Share Tutorial</h3>
@@ -419,7 +454,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                   <X size={18} className="text-primary/50 dark:text-white/50" />
                 </button>
               </div>
- 
+
               <form onSubmit={handlePostTutorial} className="space-y-4">
                 {[
                   { label: "Title", key: "title", placeholder: "e.g., How to turn jeans into a tote bag", type: "text" },
@@ -433,7 +468,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                       type={field.type}
                       value={newTutorial[field.key as keyof typeof newTutorial]}
                       onChange={(e) => setNewTutorial({ ...newTutorial, [field.key]: e.target.value })}
-                      className="w-full bg-[#E9E3FF]/20 border border-[#3B3346]/30 dark:border-pink/50 rounded-xl px-4 py-3 text-white text-sm placeholder-dark/40 dark:placeholder-white/20 focus:outline-none focus:border-[#625476] dark:focus:border-[#AC3B61] focus:bg-cream-support/50 transition-all"
+                      className="w-full bg-[#E9E3FF]/20 border border-[#3B3346]/30 dark:border-lavender-support/50 rounded-xl px-4 py-3 text-dark dark:text-cream-support text-sm placeholder-dark/40 dark:placeholder-white/20 focus:outline-none focus:border-[#625476] dark:focus:border-purple-support focus:bg-cream-support/20 transition-all"
                       placeholder={field.placeholder}
                     />
                   </div>
@@ -444,14 +479,14 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                     required
                     value={newTutorial.description}
                     onChange={(e) => setNewTutorial({ ...newTutorial, description: e.target.value })}
-                    className="w-full bg-[#E9E3FF]/20 border border-[#3B3346]/30 dark:border-pink/50 rounded-xl px-4 py-3 text-dark/30 dark:text-cream-support/30 text-sm placeholder-dark/40 dark:placeholder-white/20 focus:outline-none focus:border-[#625476] dark:focus:border-[#AC3B61] focus:bg-cream-support/50 transition-all min-h-[100px] resize-none"
+                    className="w-full bg-[#E9E3FF]/20 border border-[#3B3346]/30 dark:border-lavender-support/50 rounded-xl px-4 py-3 text-dark dark:text-cream-support text-sm placeholder-dark/40 dark:placeholder-white/20 focus:outline-none focus:border-[#625476] dark:focus:border-purple-support focus:bg-cream-support/20 transition-all min-h-[100px] resize-none"
                     placeholder="Briefly explain what this tutorial covers..."
                   />
                 </div>
- 
+
                 <button
                   type="submit"
-                  className="w-full bg-[#8D77AB] dark:bg-pink hover:bg-[#625476] dark:hover:bg-[#AC3B61] text-cream dark:text-black py-4 rounded-xl font-black text-sm uppercase tracking-widesttransition-all mt-2"
+                  className="w-full bg-[#8D77AB] dark:bg-lavender-support hover:bg-[#625476] dark:hover:bg-purple-support text-cream dark:text-black py-4 rounded-xl font-black text-sm uppercase tracking-widesttransition-all mt-2"
                 >
                   Post Tutorial
                 </button>
@@ -460,7 +495,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
           </motion.div>
         )}
       </AnimatePresence>
- 
+
       {/* Tutorial Detail Modal */}
       <AnimatePresence>
         {selectedTutorial && (
@@ -488,7 +523,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                   <X size={18} />
                 </button>
               </div>
- 
+
               {/* Info panel */}
               <div className="lg:w-2/5 flex flex-col overflow-hidden">
                 {/* Header */}
@@ -496,7 +531,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex flex-wrap gap-1.5">
                       {selectedTutorial.tags.map((tag, i) => (
-                        <span key={`${tag}-${i}`} className="bg-[#E9E3FF]/50 dark:bg-pink/50 text-[#3B3346] dark:text-cream-support border border-[#3B3346] dark:border-pink px-2.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                        <span key={`${tag}-${i}`} className="bg-[#E9E3FF]/50 dark:bg-lavender-support/50 text-[#3B3346] dark:text-cream-support border border-[#3B3346] dark:border-purple-support px-2.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">
                           {tag}
                         </span>
                       ))}
@@ -511,31 +546,38 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                     className="flex items-center gap-2 mt-3 mb-5 hover:opacity-70 transition-opacity"
                   >
                     <div className="w-6 h-6 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
-                      {selectedTutorial.authorPhoto ? (
-                        <img src={selectedTutorial.authorPhoto} className="w-full h-full object-cover" alt="" />
+                      {(selectedTutorial.authorId === user.uid ? user.photoURL : selectedTutorial.authorPhoto) ? (
+                        <img
+                          src={(selectedTutorial.authorId === user.uid ? user.photoURL : selectedTutorial.authorPhoto) || ''}
+                          className="w-full h-full object-cover"
+                          alt=""
+                          referrerPolicy="no-referrer"
+                        />
                       ) : <UserIcon size={12} className="text-white/30" />}
                     </div>
-                    <span className="text-dark/50 dark:text-cream-support/40 text-xs font-medium">{selectedTutorial.authorName}</span>
+                    <span className="text-dark/50 dark:text-cream-support/40 text-xs font-medium">
+                      {selectedTutorial.authorId === user.uid ? (user.displayName || selectedTutorial.authorName) : selectedTutorial.authorName}
+                    </span>
                   </button>
                 </div>
- 
+
                 {/* Scrollable content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                   <p className="text-dark dark:text-white/50 text-sm leading-relaxed font-light">{selectedTutorial.description}</p>
- 
+
                   {/* Community Results */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-dark dark:text-cream-support font-black text-sm uppercase tracking-wider">Community Results</span>
                       <button
                         onClick={() => setViewingComments(selectedTutorial.id)}
-                        className="text-dark dark:text-pink text-xs font-bold flex items-center gap-1 hover:text-[#625476] dark:hover:text-[#AC3B61] transition-colors"
+                        className="text-dark dark:text-lavender-support text-xs font-bold flex items-center gap-1 hover:text-[#625476] dark:hover:text-[purple-support transition-colors"
                       >
                         <MessageSquare size={12} />
                         {selectedTutorial.commentsCount || 0} Comments
                       </button>
                     </div>
- 
+
                     <div className="grid grid-cols-3 gap-2">
                       {outputs.map((output) => (
                         <div key={output.id} className="aspect-square rounded-xl overflow-hidden relative group bg-white/5">
@@ -550,10 +592,10 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                           )}
                         </div>
                       ))}
-                      <label className="aspect-square rounded-xl border border-dashed border-primary/50 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#625476] dark:hover:border-pink transition-colors group bg-white/[0.02]">
+                      <label className="aspect-square rounded-xl border border-dashed border-primary/50 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-[#625476] dark:hover:border-lavender-support transition-colors group bg-white/[0.02]">
                         {isUploadingOutput
-                          ? <RefreshCw className="animate-spin text-primary dark:text-pink" size={18} />
-                          : <Plus size={18} className="text-primary/50 group-hover:text-[#625476] dark:text-white/20 dark:group-hover:text-pink transition-colors" />
+                          ? <RefreshCw className="animate-spin text-primary dark:text-lavender-support" size={18} />
+                          : <Plus size={18} className="text-primary/50 group-hover:text-[#625476] dark:text-white/20 dark:group-hover:text-lavender-support transition-colors" />
                         }
                         <input
                           type="file"
@@ -576,7 +618,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                     </div>
                   </div>
                 </div>
- 
+
                 {/* Like button */}
                 <div className="p-6 pt-4 border-t border-dark/10 dark:border-white/10">
                   <button
@@ -585,7 +627,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
                       "w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
                       likedTutorials.includes(selectedTutorial.id)
                         ? "bg-red-500 text-white hover:bg-red-600"
-                        : "bg-[#8D77AB]/10 text-dark/50 hover:bg-[#625476] hover:text-bg border border-[#8D77AB]/50 hover:border-[#625476] dark:bg-pink/5 dark:text-pink/50 dark:hover:text-pink/50 dark:hover:bg-pink/10 dark:border-pink/10 hover:border-pink/20"
+                        : "bg-[#8D77AB]/10 text-dark/50 hover:bg-[#625476] hover:text-bg border border-[#8D77AB]/50 hover:border-[#625476] dark:bg-lavender-support/5 dark:text-lavender-support/50 dark:hover:text-purple-support/50 dark:hover:bg-lavender-support/10 dark:border-purple-support/10 hover:border-lavender-support/20"
                     )}
                   >
                     <Heart size={16} fill={likedTutorials.includes(selectedTutorial.id) ? "currentColor" : "none"} />
@@ -597,7 +639,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
           </motion.div>
         )}
       </AnimatePresence>
- 
+
       {/* Fullscreen Image Modal */}
       <AnimatePresence>
         {fullscreenImage && (
@@ -637,7 +679,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
           </motion.div>
         )}
       </AnimatePresence>
- 
+
       {/* Comments Modal */}
       <AnimatePresence>
         {viewingComments && (

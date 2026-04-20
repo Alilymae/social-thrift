@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { User, updateProfile } from "firebase/auth";
-import { db, handleFirestoreError, OperationType } from "../firebase";
+import React, { useState, useEffect, useRef } from 'react';
+import { User, updateProfile } from 'firebase/auth';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { 
   doc, 
   updateDoc, 
@@ -13,17 +13,18 @@ import {
   addDoc,
   deleteDoc,
   serverTimestamp,
-  getDocs
-} from "firebase/firestore";
-import { motion, AnimatePresence } from "motion/react";
+  getDocs,
+  collectionGroup
+} from 'firebase/firestore';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shirt, Layout, Edit2, Check, Heart, Camera, Image as ImageIcon, 
   Lock, Globe, UserPlus, UserMinus, X as XIcon, Calendar, Clock, 
   Download, Maximize2, Star, Zap, Sparkles, Grid3x3, ShoppingBag,
   MessageSquare
-} from "lucide-react";
-import { Garment, Outfit, UserProfile, SavedRecommendation, Order } from "../types";
-import { compressImage, downloadOutfit } from "../utils/image";
+} from 'lucide-react';
+import { Garment, Outfit, UserProfile, SavedRecommendation, Order } from '../types';
+import { compressImage, downloadOutfit } from '../utils/image';
 
 interface ProfileViewProps {
   user: User;
@@ -32,7 +33,6 @@ interface ProfileViewProps {
   onRateSeller?: (orderId: string, sellerId: string, sellerName: string) => void;
 }
 
-// Animation variants
 const staggerContainer = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
@@ -48,14 +48,14 @@ const fadeIn = {
   show: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const } }
 };
 
-//gemini icon
+// Gemini icon
 const GeminiIcon = ({ size = 24, fill = "none", className }: { size?: number; fill?: string; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} xmlns="http://www.w3.org/2000/svg" className={className} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3L14.5 9.5L21 12L14.5 14.5L12 21L9.5 14.5L3 12L9.5 9.5L12 3Z" />
   </svg>
 );
 
-// Reusable stat pill
+// StatPill with dark mode hover
 const StatPill = ({ value, label }: { value: number; label: string }) => (
   <motion.div
     variants={fadeUp}
@@ -66,7 +66,7 @@ const StatPill = ({ value, label }: { value: number; label: string }) => (
   </motion.div>
 );
 
-// Empty state
+// EmptyState with dark mode
 const EmptyState = ({ icon: Icon, message }: { icon: React.ElementType; message: string }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.96 }}
@@ -95,71 +95,65 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
   const [isFullscreenRec, setIsFullscreenRec] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [bio, setBio] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingProfile, setIsUploadingProfile] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<"wardrobe" | "outfits" | "favorites" | "lab" | "orders">("wardrobe");
+  const [activeTab, setActiveTab] = useState<'wardrobe' | 'outfits' | 'favorites' | 'lab' | 'orders'>('wardrobe');
   const coverInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLoading(true);
 
-    const unsubscribeProfile = onSnapshot(doc(db, "users", uid), (docSnap) => {
+    const unsubscribeProfile = onSnapshot(doc(db, 'users', uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as UserProfile;
         setProfile(data);
-        setBio(data.bio || "");
-        setDisplayName(data.displayName || "");
+        setBio(data.bio || '');
+        setDisplayName(data.displayName || '');
       }
     }, (error) => handleFirestoreError(error, OperationType.GET, `users/${uid}`));
 
-    // Separate effect-like logic for favorites to ensure proper cleanup
     let unsubscribeFavorites: (() => void) | null = null;
 
-    const unsubscribeProfileForFavs = onSnapshot(doc(db, "users", uid), (docSnap) => {
+    const unsubscribeProfileForFavs = onSnapshot(doc(db, 'users', uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as UserProfile;
         if (data.favorites && data.favorites.length > 0) {
           if (unsubscribeFavorites) unsubscribeFavorites();
-
-          const favQuery = query(collection(db, "outfits"), where(documentId(), "in", data.favorites));
+          const favQuery = query(collection(db, 'outfits'), where(documentId(), 'in', data.favorites));
           unsubscribeFavorites = onSnapshot(favQuery, (snapshot) => {
             setFavorites(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Outfit)));
           }, (error) => {
-            if (user) {
-              handleFirestoreError(error, OperationType.GET, "outfits/favorites");
-            }
+            if (user) handleFirestoreError(error, OperationType.GET, 'outfits/favorites');
           });
         } else {
           setFavorites([]);
         }
       }
     }, (error) => {
-      if (user) {
-        handleFirestoreError(error, OperationType.GET, `users/${uid}/favorites_sync`);
-      }
+      if (user) handleFirestoreError(error, OperationType.GET, `users/${uid}/favorites_sync`);
     });
 
-    const followersQuery = query(collection(db, "follows"), where("followingId", "==", uid));
+    const followersQuery = query(collection(db, 'follows'), where('followingId', '==', uid));
     const unsubscribeFollowers = onSnapshot(followersQuery, (snapshot) => {
       setFollowersCount(snapshot.size);
       setIsFollowing(snapshot.docs.some(d => d.data().followerId === user.uid));
-    }, (error) => handleFirestoreError(error, OperationType.GET, "follows/followers"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'follows/followers'));
 
-    const followingQuery = query(collection(db, "follows"), where("followerId", "==", uid));
+    const followingQuery = query(collection(db, 'follows'), where('followerId', '==', uid));
     const unsubscribeFollowing = onSnapshot(followingQuery, (snapshot) => {
       setFollowingCount(snapshot.size);
-    }, (error) => handleFirestoreError(error, OperationType.GET, "follows/following"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'follows/following'));
 
     const outfitsQuery = isOwner
-      ? query(collection(db, "outfits"), where("authorId", "==", uid))
-      : query(collection(db, "outfits"), where("authorId", "==", uid), where("isPublic", "==", true));
+      ? query(collection(db, 'outfits'), where('authorId', '==', uid))
+      : query(collection(db, 'outfits'), where('authorId', '==', uid), where('isPublic', '==', true));
     const unsubscribeOutfits = onSnapshot(outfitsQuery, (snapshot) => {
       const oList = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Outfit));
       oList.sort((a, b) => {
@@ -168,9 +162,9 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
         return timeB - timeA;
       });
       setUserOutfits(oList);
-    }, (error) => handleFirestoreError(error, OperationType.GET, "outfits"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'outfits'));
 
-    const garmentsQuery = query(collection(db, "garments"), where("ownerId", "==", uid));
+    const garmentsQuery = query(collection(db, 'garments'), where('ownerId', '==', uid));
     const unsubscribeGarments = onSnapshot(garmentsQuery, (snapshot) => {
       const gList = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Garment));
       gList.sort((a, b) => {
@@ -179,11 +173,11 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
         return timeB - timeA;
       });
       setUserGarments(gList);
-    }, (error) => handleFirestoreError(error, OperationType.GET, "garments"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'garments'));
 
     const recommendationsQuery = isOwner
-      ? query(collection(db, "saved_recommendations"), where("userId", "==", uid))
-      : query(collection(db, "saved_recommendations"), where("userId", "==", uid), where("isPublic", "==", true));
+      ? query(collection(db, 'saved_recommendations'), where('userId', '==', uid))
+      : query(collection(db, 'saved_recommendations'), where('userId', '==', uid), where('isPublic', '==', true));
     const unsubscribeRecommendations = onSnapshot(recommendationsQuery, (snapshot) => {
       const rList = snapshot.docs.map(d => ({ ...d.data(), id: d.id } as SavedRecommendation));
       rList.sort((a, b) => {
@@ -192,13 +186,13 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
         return timeB - timeA;
       });
       setSavedRecommendations(rList);
-    }, (error) => handleFirestoreError(error, OperationType.GET, "saved_recommendations"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'saved_recommendations'));
 
-    const ordersQuery = query(collection(db, "orders"), where("buyerId", "==", uid), orderBy("createdAt", "desc"));
+    const ordersQuery = query(collection(db, 'orders'), where('buyerId', '==', uid), orderBy('createdAt', 'desc'));
     const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
       setOrders(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Order)));
       setLoading(false);
-    }, (error) => handleFirestoreError(error, OperationType.GET, "orders"));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'orders'));
 
     return () => {
       unsubscribeProfile();
@@ -213,9 +207,50 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
     };
   }, [uid, user.uid]);
 
+  const syncIdentityAcrossContent = async (newDisplayName?: string, newPhotoURL?: string) => {
+    if (!user) return;
+    const authorUpdates: any = {};
+    if (newDisplayName) authorUpdates.authorName = newDisplayName;
+    if (newPhotoURL) authorUpdates.authorPhoto = newPhotoURL;
+    const userUpdates: any = {};
+    if (newDisplayName) userUpdates.userName = newDisplayName;
+    if (newPhotoURL) userUpdates.userPhoto = newPhotoURL;
+    try {
+      const promises: Promise<any>[] = [];
+      if (Object.keys(authorUpdates).length > 0) {
+        const oQuery = query(collection(db, 'outfits'), where('authorId', '==', user.uid));
+        const oSnap = await getDocs(oQuery);
+        oSnap.docs.forEach(d => promises.push(updateDoc(d.ref, authorUpdates)));
+        const tQuery = query(collection(db, 'tutorials'), where('authorId', '==', user.uid));
+        const tSnap = await getDocs(tQuery);
+        tSnap.docs.forEach(d => promises.push(updateDoc(d.ref, authorUpdates)));
+      }
+      if (Object.keys(userUpdates).length > 0) {
+        const rQuery = query(collection(db, 'saved_recommendations'), where('userId', '==', user.uid));
+        const rSnap = await getDocs(rQuery);
+        rSnap.docs.forEach(d => promises.push(updateDoc(d.ref, userUpdates)));
+        const outQuery = query(collection(db, 'tutorial_outputs'), where('userId', '==', user.uid));
+        const outSnap = await getDocs(outQuery);
+        outSnap.docs.forEach(d => promises.push(updateDoc(d.ref, userUpdates)));
+        
+        // SYNC COMMENTS ACROSS ALL COLLECTIONS
+        const commUpdates: any = {};
+        if (newDisplayName) commUpdates.authorName = newDisplayName;
+        if (newPhotoURL) commUpdates.authorPhoto = newPhotoURL;
+        
+        const commQuery = query(collectionGroup(db, 'comments'), where('authorId', '==', user.uid));
+        const commSnap = await getDocs(commQuery);
+        commSnap.docs.forEach(d => promises.push(updateDoc(d.ref, commUpdates)));
+      }
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Identity sync partially failed:", error);
+    }
+  };
+
   const handleSaveBio = async () => {
     try {
-      await updateDoc(doc(db, "users", user.uid), { bio });
+      await updateDoc(doc(db, 'users', user.uid), { bio });
       setIsEditingBio(false);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
@@ -225,12 +260,11 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
   const handleSaveName = async () => {
     if (!displayName.trim()) return;
     try {
-      await updateDoc(doc(db, "users", user.uid), { 
-        displayName: displayName.trim(),
-        displayNameLower: displayName.trim().toLowerCase()
-      });
-      await updateProfile(user, { displayName: displayName.trim() });
+      const name = displayName.trim();
+      await updateDoc(doc(db, 'users', user.uid), { displayName: name, displayNameLower: name.toLowerCase() });
+      await updateProfile(user, { displayName: name });
       setIsEditingName(false);
+      syncIdentityAcrossContent(name);
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
     }
@@ -239,7 +273,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
   const toggleOutfitPrivacy = async (outfitId: string, currentStatus: boolean) => {
     if (!isOwner) return;
     try {
-      await updateDoc(doc(db, "outfits", outfitId), { isPublic: !currentStatus });
+      await updateDoc(doc(db, 'outfits', outfitId), { isPublic: !currentStatus });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `outfits/${outfitId}`);
     }
@@ -248,7 +282,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
   const toggleRecommendationPrivacy = async (recId: string, currentStatus: boolean) => {
     if (!isOwner) return;
     try {
-      await updateDoc(doc(db, "saved_recommendations", recId), { isPublic: !currentStatus });
+      await updateDoc(doc(db, 'saved_recommendations', recId), { isPublic: !currentStatus });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `saved_recommendations/${recId}`);
     }
@@ -256,78 +290,79 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
 
   const deleteRecommendation = async (recId: string) => {
     if (!isOwner) return;
-    if (!confirm("Delete this recommendation?")) return;
+    if (!confirm('Delete this recommendation?')) return;
     try {
-      await deleteDoc(doc(db, "saved_recommendations", recId));
+      await deleteDoc(doc(db, 'saved_recommendations', recId));
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `saved_recommendations/${recId}`);
     }
   };
 
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // FIXED: cover upload — async properly scoped inside reader callback
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingCover(true);
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const compressed = await compressImage(reader.result as string, 1200, 400, 0.7);
-          await updateDoc(doc(db, "users", user.uid), { coverPhotoURL: compressed });
-        } catch (error) {
-          handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
-        } finally {
-          setIsUploadingCover(false);
-        }
-      };
-      reader.onerror = () => setIsUploadingCover(false);
-      reader.readAsDataURL(file);
-    } catch {
-      setIsUploadingCover(false);
-    }
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const compressed = await compressImage(reader.result as string, 1000, 334, 0.6, 'image/jpeg');
+        await updateDoc(doc(db, 'users', user.uid), { coverPhotoURL: compressed });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+      } finally {
+        setIsUploadingCover(false);
+      }
+    };
+    reader.onerror = () => setIsUploadingCover(false);
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
-  const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // FIXED: saves to Firestore first (live-updating via onSnapshot), then Auth best-effort
+  const handleProfilePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingProfile(true);
-    try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const compressed = await compressImage(reader.result as string, 400, 400, 0.7, 'image/jpeg');
+        await updateDoc(doc(db, 'users', user.uid), { photoURL: compressed });
         try {
-          const compressed = await compressImage(reader.result as string, 400, 400, 0.7);
-          await updateDoc(doc(db, "users", user.uid), { photoURL: compressed });
           await updateProfile(user, { photoURL: compressed });
-        } catch (error) {
-          handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
-        } finally {
-          setIsUploadingProfile(false);
+        } catch {
+          // Auth update can fail silently for large base64 strings
         }
-      };
-      reader.onerror = () => setIsUploadingProfile(false);
-      reader.readAsDataURL(file);
-    } catch {
-      setIsUploadingProfile(false);
-    }
+        syncIdentityAcrossContent(undefined, compressed);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+      } finally {
+        setIsUploadingProfile(false);
+      }
+    };
+    reader.onerror = () => setIsUploadingProfile(false);
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleFollow = async () => {
     if (!user || isOwner) return;
     try {
-      await addDoc(collection(db, "follows"), { followerId: user.uid, followingId: uid, createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'follows'), { followerId: user.uid, followingId: uid, createdAt: serverTimestamp() });
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, "follows");
+      handleFirestoreError(error, OperationType.CREATE, 'follows');
     }
   };
 
   const handleUnfollow = async () => {
     if (!user || isOwner) return;
     try {
-      const q = query(collection(db, "follows"), where("followerId", "==", user.uid), where("followingId", "==", uid));
+      const q = query(collection(db, 'follows'), where('followerId', '==', user.uid), where('followingId', '==', uid));
       const snapshot = await getDocs(q);
-      await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, "follows", d.id))));
+      await Promise.all(snapshot.docs.map(d => deleteDoc(doc(db, 'follows', d.id))));
     } catch (error) {
-      handleFirestoreError(error, OperationType.GET, "follows");
+      handleFirestoreError(error, OperationType.GET, 'follows');
     }
   };
 
@@ -335,27 +370,28 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
     <div className="flex items-center justify-center py-32">
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
         className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary"
       />
     </div>
   );
 
   const tabs = [
-    { id: "wardrobe" as const, label: "Wardrobe", icon: Shirt, count: userGarments.length },
-    { id: "outfits" as const, label: "Outfits", icon: Layout, count: userOutfits.length },
-    { id: "favorites" as const, label: "Favorites", icon: Heart, count: favorites.length },
-    { id: "lab" as const, label: "AI Lab", icon: Sparkles, count: savedRecommendations.length },
-    ...(isOwner ? [{ id: "orders" as const, label: "Orders", icon: ShoppingBag, count: orders.length }] : []),
+    { id: 'wardrobe' as const, label: 'Wardrobe', icon: Shirt, count: userGarments.length },
+    { id: 'outfits' as const, label: 'Outfits', icon: Layout, count: userOutfits.length },
+    { id: 'favorites' as const, label: 'Favorites', icon: Heart, count: favorites.length },
+    { id: 'lab' as const, label: 'AI Lab', icon: Sparkles, count: savedRecommendations.length },
+    ...(isOwner ? [{ id: 'orders' as const, label: 'Orders', icon: ShoppingBag, count: orders.length }] : []),
   ];
+
+  // Always read avatar from Firestore (live via onSnapshot), fall back to Auth
+  const currentPhotoURL = profile?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`;
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-5 pb-16">
 
       {/* ── HERO HEADER ── */}
       <motion.section variants={fadeIn} className="relative rounded-3xl overflow-hidden border border-border shadow-sm bg-card">
-
-        {/* Cover */}
         <div className="relative h-52 md:h-64 bg-bg overflow-hidden">
           {profile?.coverPhotoURL ? (
             <motion.img
@@ -378,10 +414,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
               <ImageIcon size={40} className="text-text-muted relative z-10" />
             </div>
           )}
-
-          {/* Bottom gradient fade into card */}
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-card to-transparent pointer-events-none" />
-
           {isOwner && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -392,17 +425,16 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
               className="absolute bottom-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-md flex items-center gap-2 text-xs px-4 py-2 shadow-lg z-20 disabled:opacity-50 transition-colors"
             >
               <Camera size={14} />
-              {isUploadingCover ? "Uploading..." : "Change Cover"}
+              {isUploadingCover ? 'Uploading...' : 'Change Cover'}
             </motion.button>
           )}
           <input type="file" ref={coverInputRef} onChange={handleCoverUpload} className="hidden" accept="image/*" />
         </div>
 
-        {/* Profile info */}
         <div className="px-6 md:px-10 pb-8 -mt-14 relative z-10">
           <div className="flex flex-col md:flex-row md:items-end gap-5">
 
-            {/* Avatar */}
+            {/* Avatar — reads Firestore so photo updates everywhere instantly */}
             <div className="relative group/avatar flex-shrink-0">
               <motion.div
                 initial={{ scale: 0.78, opacity: 0 }}
@@ -410,11 +442,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                 transition={{ delay: 0.15, duration: 0.55, ease: [0.22, 1, 0.36, 1] as const }}
                 className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-card shadow-xl overflow-hidden bg-card"
               >
-                <img
-                  src={profile?.photoURL || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`}
-                  className="w-full h-full object-cover"
-                  alt="Profile"
-                />
+                <img src={currentPhotoURL} className="w-full h-full object-cover" alt="Profile" />
               </motion.div>
               {isOwner && (
                 <button
@@ -422,7 +450,17 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   onClick={() => profileInputRef.current?.click()}
                   disabled={isUploadingProfile}
                 >
-                  <div className="bg-black/50 p-2.5 rounded-xl"><Camera size={20} /></div>
+                  <div className="bg-black/50 p-2.5 rounded-xl">
+                    {isUploadingProfile ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                      />
+                    ) : (
+                      <Camera size={20} />
+                    )}
+                  </div>
                 </button>
               )}
               <input type="file" ref={profileInputRef} onChange={handleProfilePhotoUpload} className="hidden" accept="image/*" />
@@ -443,7 +481,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     <button onClick={handleSaveName} className="p-1.5 bg-primary text-bg rounded-lg hover:scale-105 transition-all">
                       <Check size={14} />
                     </button>
-                    <button onClick={() => { setIsEditingName(false); setDisplayName(profile?.displayName || ""); }} className="p-1.5 bg-zinc-100 text-zinc-400 rounded-lg hover:bg-zinc-200 transition-all">
+                    <button onClick={() => { setIsEditingName(false); setDisplayName(profile?.displayName || ''); }} className="p-1.5 bg-zinc-100 text-zinc-400 rounded-lg hover:bg-zinc-200 transition-all">
                       <XIcon size={14} />
                     </button>
                   </div>
@@ -460,16 +498,16 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   </div>
                 )}
 
-                {profile?.tier === "premium" && (
+                {profile?.tier === 'premium' && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ delay: 0.45, type: "spring", stiffness: 300 }}
+                    transition={{ delay: 0.45, type: 'spring', stiffness: 300 }}
                     className="bg-orange text-primary text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow border border-primary/10 dark:text-dark-green"
                   >
                     <Star size={10} fill="currentColor" />
                   </motion.div>
-                )}  
+                )}
 
                 {profile?.sellerRating !== undefined && (
                   <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-full text-[10px] font-bold border border-amber-600">
@@ -486,11 +524,11 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     whileTap={{ scale: 0.97 }}
                     onClick={isFollowing ? handleUnfollow : handleFollow}
                     className={`px-5 py-1.5 rounded-full font-bold text-sm flex items-center gap-1.5 transition-all ${
-                      isFollowing ? "bg-primary/10 text-primary hover:bg-primary/20" : "bg-primary text-bg shadow-lg"
+                      isFollowing ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-primary text-bg shadow-lg'
                     }`}
                   >
                     {isFollowing ? <UserMinus size={14} /> : <UserPlus size={14} />}
-                    {isFollowing ? "Unfollow" : "Follow"}
+                    {isFollowing ? 'Unfollow' : 'Follow'}
                   </motion.button>
                 )}
 
@@ -500,13 +538,9 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={onUpgrade}
-                    className={`px-5 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1.5 ${
-                      profile?.tier === "premium"
-                        ? "bg-orange text-primary dark:text-[#024A34]"
-                        : "bg-orange text-primary dark:text-[#024A34]"
-                    }`}
+                    className="px-5 py-1.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-1.5 bg-orange text-primary dark:text-[#024A34]"
                   >
-                    <Zap size={14} /> {profile?.tier === "premium" ? "Manage Plan" : "Upgrade"}
+                    <Zap size={14} /> {profile?.tier === 'premium' ? 'Manage Plan' : 'Upgrade'}
                   </motion.button>
                 )}
               </div>
@@ -515,7 +549,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                 <Calendar size={12} />
                 Member since {profile?.createdAt
                   ? ((profile.createdAt as any).toDate?.()?.toLocaleDateString() || new Date(profile.createdAt as any).toLocaleDateString())
-                  : "recently"}
+                  : 'recently'}
               </motion.p>
 
               <motion.div variants={fadeUp}>
@@ -536,7 +570,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                 ) : (
                   <div className="flex items-start gap-2 max-w-lg">
                     <p className="text-text-muted text-sm italic leading-relaxed dark:text-white/80">
-                      {bio || (isOwner ? "No bio yet — add one to express your style!" : "No bio yet.")}
+                      {bio || (isOwner ? 'No bio yet — add one to express your style!' : 'No bio yet.')}
                     </p>
                     {isOwner && (
                       <button onClick={() => setIsEditingBio(true)} className="p-1 text-text-muted hover:text-primary transition-colors flex-shrink-0 mt-0.5 dark:text-white/70 dark:hover:text-white">
@@ -548,7 +582,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
               </motion.div>
             </div>
 
-            {/* stats componenst */}
+            {/* Followers / Following pills */}
             <motion.div variants={staggerContainer} className="flex gap-2 flex-wrap md:justify-end">
               <StatPill value={followersCount} label="Followers" />
               <StatPill value={followingCount} label="Following" />
@@ -557,24 +591,51 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
         </div>
       </motion.section>
 
-      {/* bento stats*/}
+      {/* ── BENTO STATS — colorful cards with light + dark variants ── */}
       <motion.div variants={staggerContainer} className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Wardrobe items", value: userGarments.length, icon: Shirt, color: "text-primary dark:text-[#111110]", tc: "text-primary dark:text-[#111110]", bg: "bg-cream/50", border: "border-primary/50 dark:border-cream-support/50", cbg: " bg-yellow-support dark:bg-orange" },
-          { label: "Outfits styled", value: userOutfits.length, icon: Grid3x3, color: "text-[#111110]", tc: "text-[#111110]", bg: "bg-lavender-support/50", border: "border-[#111110]/50 dark:border-[#E9E3FF]/50", cbg: " bg-[#E9E3FF] dark:bg-purple-support" },
-          { label: "Liked outfits", value: favorites.length, icon: Heart, color: "text-primary dark:text-[#FFD7E1]", tc: "text-primary dark:text-[#FFD7E1]", bg: "bg-[#FFD7E1]/60 dark:bg-pink/40", border: "border-primary/50 dark:border-pink", cbg:" bg-pink dark:bg-[#AC3B61]" },
-          { label: "AI sessions", value: savedRecommendations.length, icon: GeminiIcon, color:"text-primary dark:text-cream-support", tc: "text-primary dark:text-cream-support", bg: "bg-[#DDFFE2]/50 dark:bg-light-green/40", border: "border-primary/50 dark:border-cream-support", cbg:" bg-light-green dark:bg-[#3D7337]" },
+          {
+            label: 'Wardrobe items', value: userGarments.length, icon: Shirt,
+            color: 'text-primary dark:text-[#111110]',
+            tc: 'text-primary dark:text-[#111110]',
+            bg: 'bg-cream/50',
+            border: 'border-primary/50 dark:border-cream-support/50',
+            cbg: 'bg-yellow-support dark:bg-orange',
+          },
+          {
+            label: 'Outfits styled', value: userOutfits.length, icon: Grid3x3,
+            color: 'text-[#111110]',
+            tc: 'text-[#111110]',
+            bg: 'bg-lavender-support/50',
+            border: 'border-[#111110]/50 dark:border-[#E9E3FF]/50',
+            cbg: 'bg-[#E9E3FF] dark:bg-purple-support',
+          },
+          {
+            label: 'Liked outfits', value: favorites.length, icon: Heart,
+            color: 'text-primary dark:text-[#FFD7E1]',
+            tc: 'text-primary dark:text-[#FFD7E1]',
+            bg: 'bg-[#FFD7E1]/60 dark:bg-pink/40',
+            border: 'border-primary/50 dark:border-pink',
+            cbg: 'bg-pink dark:bg-[#AC3B61]',
+          },
+          {
+            label: 'AI sessions', value: savedRecommendations.length, icon: GeminiIcon,
+            color: 'text-primary dark:text-cream-support',
+            tc: 'text-primary dark:text-cream-support',
+            bg: 'bg-[#DDFFE2]/50 dark:bg-light-green/40',
+            border: 'border-primary/50 dark:border-cream-support',
+            cbg: 'bg-light-green dark:bg-[#3D7337]',
+          },
         ].map((stat) => (
           <motion.div
             key={stat.label}
             variants={fadeUp}
             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-            className= {`${stat.cbg} border ${stat.border} rounded-2xl p-4 flex items-center gap-5 shadow-sm`}
+            className={`${stat.cbg} border ${stat.border} rounded-2xl p-4 flex items-center gap-5 shadow-sm`}
           >
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.border} ${stat.tc} flex items-center justify-center flex-shrink-0`}>
+            <div className={`w-10 h-10 rounded-xl ${stat.bg} border ${stat.border} flex items-center justify-center flex-shrink-0`}>
               <stat.icon size={18} className={stat.color} />
             </div>
-
             <div className="text-left">
               <p className={`text-xl font-bold ${stat.tc} tabular-nums`}>{stat.value}</p>
               <p className={`text-[10px] ${stat.tc} uppercase tracking-wider leading-tight`}>{stat.label}</p>
@@ -583,32 +644,32 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
         ))}
       </motion.div>
 
-      {/* ── TABS ── */}
+      {/* ── TABS — dark mode hover styling ── */}
       <motion.div variants={fadeUp} className="flex gap-1 bg-bg rounded-2xl p-1 border border-border">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`group relative flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold transition-colors ${
-              activeTab === tab.id 
-                ? "text-primary" 
-                : "text-text-muted hover:text-[#024A34] dark:text-white/70 dark:hover:text-primary"
+              activeTab === tab.id
+                ? 'text-primary'
+                : 'text-text-muted hover:text-[#024A34] dark:text-white/70 dark:hover:text-primary'
             }`}
           >
             {activeTab === tab.id && (
               <motion.div
                 layoutId="tab-bg"
                 className="absolute inset-0 bg-card rounded-xl shadow-sm border border-primary/5"
-                transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               />
             )}
             <tab.icon size={15} className="relative z-10 flex-shrink-0" />
             <span className="relative z-10 hidden sm:inline">{tab.label}</span>
             {tab.count > 0 && (
               <span className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
-                activeTab === tab.id 
-                  ? "bg-primary/10 text-primary" 
-                  : "bg-card-hover text-text-muted dark:bg-white/10 dark:text-white/70 group-hover:bg-[#024A34]/10 group-hover:text-[#024A34] dark:group-hover:bg-primary/10 dark:group-hover:text-yellow-400"
+                activeTab === tab.id
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-card-hover text-text-muted dark:bg-white/10 dark:text-white/70 group-hover:bg-[#024A34]/10 group-hover:text-[#024A34] dark:group-hover:bg-primary/10 dark:group-hover:text-yellow-400'
               }`}>
                 {tab.count}
               </span>
@@ -620,8 +681,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
       {/* ── TAB CONTENT ── */}
       <AnimatePresence mode="wait">
 
-        {/* WARDROBE */}
-        {activeTab === "wardrobe" && (
+        {activeTab === 'wardrobe' && (
           <motion.div
             key="wardrobe"
             initial={{ opacity: 0, y: 16 }}
@@ -630,7 +690,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as const }}
           >
             {userGarments.length === 0 ? <EmptyState icon={Shirt} message="No garments in wardrobe yet." /> : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {userGarments.map((g, i) => (
                   <motion.div
                     key={g.id}
@@ -649,8 +709,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
           </motion.div>
         )}
 
-        {/* OUTFITS */}
-        {activeTab === "outfits" && (
+        {activeTab === 'outfits' && (
           <motion.div
             key="outfits"
             initial={{ opacity: 0, y: 16 }}
@@ -670,40 +729,51 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   className="bg-card rounded-2xl p-4 border border-border flex gap-4 items-center group"
                 >
                   <div
-                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl relative overflow-hidden flex-shrink-0"
-                    style={{ backgroundColor: outfit.backgroundColor || "var(--bg)" }}
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl relative overflow-hidden flex-shrink-0 cursor-pointer"
+                    style={{ backgroundColor: outfit.backgroundColor || 'var(--bg)' }}
+                    onClick={() => setViewingOutfit(outfit)}
                   >
-                    {outfit.items.slice(0, 3).map((item, idx) => (
+                    {outfit.previewUrl ? (
                       <img
-                        key={idx}
-                        src={item.imageUrl}
-                        className="absolute w-full h-full object-contain opacity-80"
-                        style={{ transform: `scale(${0.5 + idx * 0.1})` }}
-                        alt="Item"
+                        src={outfit.previewUrl}
+                        className="w-full h-full object-contain"
+                        alt="Outfit"
+                        referrerPolicy="no-referrer"
                       />
-                    ))}
+                    ) : (
+                      outfit.items.slice(0, 3).map((item, idx) => item.imageUrl ? (
+                        <img
+                          key={idx}
+                          src={item.imageUrl}
+                          className="absolute w-full h-full object-contain opacity-80"
+                          style={{ transform: `scale(${0.5 + idx * 0.1})` }}
+                          alt="Item"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : null)
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pointer-events-auto cursor-pointer" onClick={() => setViewingOutfit(outfit)}>
                     <p className="font-bold text-sm text-text dark:text-white">Outfit #{outfit.id.slice(-4)}</p>
                     <p className="text-xs text-text-muted truncate dark:text-white/70">
                       {outfit.items.length} items
-                      {outfit.createdAt && typeof outfit.createdAt.toDate === "function"
-                        ? ` · ${outfit.createdAt.toDate().toLocaleDateString()}` : ""}
+                      {outfit.createdAt && typeof outfit.createdAt.toDate === 'function'
+                        ? ` · ${outfit.createdAt.toDate().toLocaleDateString()}` : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                      outfit.isPublic ? "bg-primary/10 text-primary dark:text-white" : "bg-card-hover text-text-muted dark:text-white/70"
+                      outfit.isPublic ? 'bg-primary/10 text-primary dark:text-white' : 'bg-card-hover text-text-muted dark:text-white/70'
                     }`}>
                       {outfit.isPublic ? <Globe size={10} /> : <Lock size={10} />}
-                      {outfit.isPublic ? "Public" : "Private"}
+                      {outfit.isPublic ? 'Public' : 'Private'}
                     </div>
                     {isOwner && (
                       <button
                         onClick={() => toggleOutfitPrivacy(outfit.id, outfit.isPublic)}
                         className="text-[10px] font-bold text-text-muted hover:text-primary uppercase tracking-widest transition-colors dark:text-white/70 dark:hover:text-white"
                       >
-                        {outfit.isPublic ? "Make Private" : "Make Public"}
+                        {outfit.isPublic ? 'Make Private' : 'Make Public'}
                       </button>
                     )}
                   </div>
@@ -713,8 +783,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
           </motion.div>
         )}
 
-        {/* FAVORITES */}
-        {activeTab === "favorites" && (
+        {activeTab === 'favorites' && (
           <motion.div
             key="favorites"
             initial={{ opacity: 0, y: 16 }}
@@ -733,36 +802,55 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     whileHover={{ y: -5, transition: { duration: 0.2 } }}
                     className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm group"
                   >
-                    <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: outfit.backgroundColor || "var(--bg)" }}>
+                    <div
+                      className="aspect-square relative overflow-hidden cursor-pointer"
+                      onClick={() => setViewingOutfit(outfit)}
+                      style={{ backgroundColor: outfit.backgroundColor || 'var(--bg)' }}
+                    >
                       <div className="absolute inset-0">
-                        {outfit.items.map((item, idx) => (
+                        {outfit.previewUrl ? (
                           <img
-                            key={idx}
-                            src={item.imageUrl}
-                            className="absolute"
-                            style={{
-                              left: `${(item.x / 800) * 100}%`,
-                              top: `${(item.y / 800) * 100}%`,
-                              width: `${((item.width || 200) / 800) * 100}%`,
-                              height: `${((item.height || 200) / 800) * 100}%`,
-                              transformOrigin: "0 0",
-                              transform: `scale(${item.scaleX ?? item.scale}, ${item.scaleY ?? item.scale}) rotate(${item.rotation}deg)`,
-                              objectFit: "cover",
-                              borderRadius: "4px"
-                            }}
-                            alt="Outfit item"
+                            src={outfit.previewUrl}
+                            className="w-full h-full object-contain"
+                            alt="Outfit"
+                            referrerPolicy="no-referrer"
                           />
-                        ))}
+                        ) : (
+                          outfit.items.map((item, idx) => (
+                            item.imageUrl && (
+                              <img
+                                key={idx}
+                                src={item.imageUrl}
+                                referrerPolicy="no-referrer"
+                                className="absolute"
+                                style={{
+                                  left: `${(item.x / 800) * 100}%`,
+                                  top: `${(item.y / 800) * 100}%`,
+                                  width: `${((item.width || 200) / 800) * 100}%`,
+                                  height: `${((item.height || 200) / 800) * 100}%`,
+                                  transformOrigin: '0 0',
+                                  transform: `scale(${item.scaleX ?? item.scale}, ${item.scaleY ?? item.scale}) rotate(${item.rotation}deg)`,
+                                  objectFit: 'contain',
+                                  borderRadius: '4px'
+                                }}
+                                alt="Outfit item"
+                              />
+                            )
+                          ))
+                        )}
                       </div>
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                     </div>
                     <div className="p-3 flex items-center gap-2 border-t border-border">
                       <img
-                        src={outfit.authorPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${outfit.authorId}`}
+                        src={(outfit.authorId === user.uid ? currentPhotoURL : outfit.authorPhoto) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${outfit.authorId}`}
                         className="w-5 h-5 rounded-full border border-border"
                         alt="Author"
+                        referrerPolicy="no-referrer"
                       />
-                      <p className="text-[11px] font-bold text-text-muted truncate flex-1 dark:text-white/70">{outfit.authorName}</p>
+                      <p className="text-[11px] font-bold text-text-muted truncate flex-1 dark:text-white/70">
+                        {outfit.authorId === user.uid ? (profile?.displayName || user.displayName || outfit.authorName) : outfit.authorName}
+                      </p>
                       <Heart size={11} className="text-red-400 flex-shrink-0" fill="currentColor" />
                     </div>
                   </motion.div>
@@ -772,8 +860,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
           </motion.div>
         )}
 
-        {/* AI LAB */}
-        {activeTab === "lab" && (
+        {activeTab === 'lab' && (
           <motion.div
             key="lab"
             initial={{ opacity: 0, y: 16 }}
@@ -809,10 +896,10 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                         {isOwner && (
                           <div className="absolute top-3 right-3 flex flex-col items-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${
-                              rec.isPublic ? "bg-light-green/90 text-bg" : "bg-black/70 text-white"
+                              rec.isPublic ? 'bg-light-green/90 text-bg' : 'bg-black/70 text-white'
                             }`}>
                               {rec.isPublic ? <Globe size={9} /> : <Lock size={9} />}
-                              {rec.isPublic ? "Public" : "Private"}
+                              {rec.isPublic ? 'Public' : 'Private'}
                             </div>
                             <button
                               onClick={(e) => { e.stopPropagation(); toggleRecommendationPrivacy(rec.id, rec.isPublic); }}
@@ -832,8 +919,8 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                         </p>
                         <div className="flex items-center justify-between pt-1">
                           <span className="text-[10px] text-text/30 uppercase tracking-widest dark:text-white/60">
-                            {rec.createdAt && typeof rec.createdAt.toDate === "function"
-                              ? rec.createdAt.toDate().toLocaleDateString() : "Just now"}
+                            {rec.createdAt && typeof rec.createdAt.toDate === 'function'
+                              ? rec.createdAt.toDate().toLocaleDateString() : 'Just now'}
                           </span>
                           <div className="flex items-center gap-3">
                             {isOwner && (
@@ -861,8 +948,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
           </motion.div>
         )}
 
-        {/* ORDERS */}
-        {activeTab === "orders" && isOwner && (
+        {activeTab === 'orders' && isOwner && (
           <motion.div
             key="orders"
             initial={{ opacity: 0, y: 16 }}
@@ -891,13 +977,13 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                       </span>
                     </div>
                     <p className="text-xs text-text/40 dark:text-white/70">
-                      Order #{order.id.slice(-6).toUpperCase()} · {order.createdAt && typeof order.createdAt.toDate === "function" ? order.createdAt.toDate().toLocaleDateString() : "Just now"}
+                      Order #{order.id.slice(-6).toUpperCase()} · {order.createdAt && typeof order.createdAt.toDate === 'function' ? order.createdAt.toDate().toLocaleDateString() : 'Just now'}
                     </p>
                     <p className="text-primary font-bold">${order.price.toFixed(2)}</p>
                   </div>
                   <div className="flex flex-col gap-2 w-full sm:w-auto">
-                    <button 
-                      onClick={() => onRateSeller?.(order.id, order.sellerId, "Seller")}
+                    <button
+                      onClick={() => onRateSeller?.(order.id, order.sellerId, 'Seller')}
                       className="px-6 py-2.5 bg-primary text-bg rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-lg"
                     >
                       <MessageSquare size={14} />
@@ -934,29 +1020,41 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
               initial={{ scale: 0.88, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.88, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-4xl aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="relative w-full max-w-4xl aspect-[4/5] md:aspect-square bg-card rounded-3xl overflow-hidden shadow-2xl border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute inset-0" style={{ backgroundColor: viewingOutfit.backgroundColor || "#ffffff" }}>
-                {viewingOutfit.items.map((item, i) => (
+              <div className="absolute inset-0" style={{ backgroundColor: viewingOutfit.backgroundColor || '#ffffff' }}>
+                {viewingOutfit.previewUrl ? (
                   <img
-                    key={i}
-                    src={item.imageUrl}
-                    className="absolute"
-                    style={{
-                      left: `${(item.x / 800) * 100}%`,
-                      top: `${(item.y / 800) * 100}%`,
-                      width: `${((item.width || 200) / 800) * 100}%`,
-                      height: `${((item.height || 200) / 800) * 100}%`,
-                      transformOrigin: "0 0",
-                      transform: `scale(${item.scaleX ?? item.scale}, ${item.scaleY ?? item.scale}) rotate(${item.rotation}deg)`,
-                      objectFit: "cover",
-                      borderRadius: "4px"
-                    }}
-                    alt="Outfit item"
+                    src={viewingOutfit.previewUrl}
+                    className="w-full h-full object-contain"
+                    alt="Outfit preview"
+                    referrerPolicy="no-referrer"
                   />
-                ))}
+                ) : (
+                  viewingOutfit.items.map((item, i) => (
+                    item.imageUrl && (
+                      <img
+                        key={i}
+                        src={item.imageUrl}
+                        className="absolute"
+                        referrerPolicy="no-referrer"
+                        style={{
+                          left: `${(item.x / 800) * 100}%`,
+                          top: `${(item.y / 800) * 100}%`,
+                          width: `${((item.width || 200) / 800) * 100}%`,
+                          height: `${((item.height || 200) / 800) * 100}%`,
+                          transformOrigin: '0 0',
+                          transform: `scale(${item.scaleX ?? item.scale}, ${item.scaleY ?? item.scale}) rotate(${item.rotation ?? 0}deg)`,
+                          objectFit: 'contain',
+                          borderRadius: '4px'
+                        }}
+                        alt="Outfit item"
+                      />
+                    )
+                  ))
+                )}
               </div>
             </motion.div>
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
@@ -984,25 +1082,25 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
               initial={{ scale: 0.88, y: 24, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.88, y: 24, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="bg-card rounded-[2rem] overflow-hidden max-w-2xl w-full shadow-2xl border border-primary/10"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className={`relative ${isFullscreenRec ? "h-[75vh]" : "aspect-video"} bg-bg transition-all duration-500`}>
+              <div className={`relative ${isFullscreenRec ? 'h-[75vh]' : 'aspect-video'} bg-bg transition-all duration-500`}>
                 <img
                   src={selectedRecommendation.imageUrl}
-                  className={`w-full h-full ${isFullscreenRec ? "object-contain" : "object-cover"} cursor-zoom-in`}
+                  className={`w-full h-full ${isFullscreenRec ? 'object-contain' : 'object-cover'} cursor-zoom-in`}
                   alt="Recommendation"
                   onClick={() => setIsFullscreenRec(!isFullscreenRec)}
                 />
                 <div className="absolute top-4 right-4 flex gap-2">
                   {[
                     {
-                      icon: Download, title: "Download",
-                      action: () => { const a = document.createElement("a"); a.href = selectedRecommendation.imageUrl; a.download = `rec-${selectedRecommendation.id}.jpg`; a.click(); }
+                      icon: Download, title: 'Download',
+                      action: () => { const a = document.createElement('a'); a.href = selectedRecommendation.imageUrl; a.download = `rec-${selectedRecommendation.id}.jpg`; a.click(); }
                     },
-                    { icon: Maximize2, title: isFullscreenRec ? "Collapse" : "Expand", action: () => setIsFullscreenRec(!isFullscreenRec) },
-                    { icon: XIcon, title: "Close", action: () => { setSelectedRecommendation(null); setIsFullscreenRec(false); } },
+                    { icon: Maximize2, title: isFullscreenRec ? 'Collapse' : 'Expand', action: () => setIsFullscreenRec(!isFullscreenRec) },
+                    { icon: XIcon, title: 'Close', action: () => { setSelectedRecommendation(null); setIsFullscreenRec(false); } },
                   ].map(({ icon: Icon, action, title }) => (
                     <motion.button
                       key={title}
@@ -1034,13 +1132,13 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                   <div className="text-right text-[10px] text-text/40 uppercase tracking-widest space-y-0.5 dark:text-white/70">
                     <div className="flex items-center justify-end gap-1">
                       <Calendar size={11} />
-                      {selectedRecommendation.createdAt && typeof selectedRecommendation.createdAt.toDate === "function"
-                        ? selectedRecommendation.createdAt.toDate().toLocaleDateString() : "Today"}
+                      {selectedRecommendation.createdAt && typeof selectedRecommendation.createdAt.toDate === 'function'
+                        ? selectedRecommendation.createdAt.toDate().toLocaleDateString() : 'Today'}
                     </div>
                     <div className="flex items-center justify-end gap-1">
                       <Clock size={11} />
-                      {selectedRecommendation.createdAt && typeof selectedRecommendation.createdAt.toDate === "function"
-                        ? selectedRecommendation.createdAt.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Just now"}
+                      {selectedRecommendation.createdAt && typeof selectedRecommendation.createdAt.toDate === 'function'
+                        ? selectedRecommendation.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                     </div>
                   </div>
                 </div>
@@ -1056,7 +1154,7 @@ export const ProfileView = ({ user, targetUserId, onUpgrade, onRateSeller }: Pro
                     <motion.button
                       whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                       onClick={() => {
-                        if (confirm("Delete this recommendation?")) {
+                        if (confirm('Delete this recommendation?')) {
                           deleteRecommendation(selectedRecommendation.id);
                           setSelectedRecommendation(null);
                         }

@@ -99,37 +99,51 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
 
   return (
     <div className="space-y-12">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange/10 text-orange text-xs font-bold uppercase tracking-wider border border-orange/20">
-            <ShoppingBag size={14} />
-            Conscious Market
+      {/* Marketplace Hero Banner */}
+      <div className="relative rounded-[2.5rem] overflow-hidden mb-8 bg-orange dark:bg-[#724C00] border-2 border-primary dark:border-orange" style={{ minHeight: 200 }}>
+        <div
+          className="absolute inset-0 opacity-[0.10]"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px),
+              repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 39px, var(--grid-color) 40px)
+            `
+          }}
+        />
+        <motion.div className="absolute -right-10 bottom-0 w-40 h-50 bg-primary/10 dark:bg-orange/10 rounded-full" />
+        <motion.div className="absolute right-30 -bottom-4 w-40 h-30 bg-primary/10 dark:bg-orange/10 rounded-full rotate-40" />
+        <motion.div className="absolute right-33 top-5 w-15 h-16 bg-primary/10 dark:bg-orange/10 rounded-full" />
+        <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 text-primary dark:text-orange">
+              <ShoppingBag size={14} className="text-primary dark:text-orange" />
+              <span className="text-primary dark:text-orange text-xs font-bold uppercase tracking-[0.3em]">Conscious Market</span>
+            </div>
+            <h2 className="text-6xl md:text-7xl font-heading text-primary dark:text-cream-support leading-none">Marketplace</h2>
+            <p className="text-dark/70 dark:text-orange text-sm font-medium max-w-xl">Give pre-loved fashion a second life. Buy and sell within our conscious community.</p>
           </div>
-          <h2 className="text-6xl font-heading text-primary leading-none">Marketplace</h2>
-          <p className="text-xl text-dark/50 font-medium max-w-xl">
-            Give pre-loved fashion a second life. Buy and sell within our conscious community.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
-            <input 
-              type="text"
-              placeholder="Search items..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-card border border-border rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            />
+          
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 dark:text-orange/60" size={18} />
+              <input 
+                type="text"
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-card/80 backdrop-blur-md border border-border rounded-full pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text"
+              />
+            </div>
+            <button 
+              onClick={() => setIsPosting(true)}
+              className="bg-primary dark:bg-orange text-bg dark:text-dark px-8 py-3.5 rounded-full font-heading text-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl retro-shadow-marketplace"
+            >
+              <Plus size={20} />
+              Sell Item
+            </button>
           </div>
-          <button 
-            onClick={() => setIsPosting(true)}
-            className="bg-primary text-bg px-8 py-4 rounded-2xl font-heading text-xl flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl retro-shadow-pink"
-          >
-            <Plus size={24} />
-            Sell Item
-          </button>
         </div>
-      </header>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {loading ? (

@@ -3,6 +3,7 @@ import Cropper from 'react-easy-crop';
 import { X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getCroppedImg } from '../utils/image';
+import { cn } from '../lib/utils';
 
 interface CropModalProps {
   image: string;
@@ -13,8 +14,16 @@ interface CropModalProps {
 export const CropModal: React.FC<CropModalProps> = ({ image, onCropComplete, onClose }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [aspect, setAspect] = useState<number | undefined>(3 / 4);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const aspectRatios = [
+    { label: '3:4', value: 3 / 4 },
+    { label: '1:1', value: 1 },
+    { label: '4:3', value: 4 / 3 },
+    { label: 'Free', value: undefined },
+  ];
 
   const onCropChange = (crop: { x: number, y: number }) => {
     setCrop(crop);
@@ -51,7 +60,7 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onCropComplete, onC
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
-        className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full flex flex-col shadow-2xl h-[80vh]"
+        className="bg-white rounded-3xl overflow-hidden max-w-2xl w-full flex flex-col shadow-2xl h-[90vh]"
       >
         <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-white z-10">
           <h3 className="text-xl font-bold">Crop Your Item</h3>
@@ -65,7 +74,7 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onCropComplete, onC
             image={image}
             crop={crop}
             zoom={zoom}
-            aspect={3 / 4}
+            aspect={aspect}
             onCropChange={onCropChange}
             onCropComplete={onCropCompleteInternal}
             onZoomChange={onZoomChange}
@@ -73,6 +82,23 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onCropComplete, onC
         </div>
 
         <div className="p-6 bg-white space-y-6">
+          <div className="grid grid-cols-4 gap-2">
+            {aspectRatios.map((ratio) => (
+              <button
+                key={ratio.label}
+                onClick={() => setAspect(ratio.value)}
+                className={cn(
+                  "py-2 rounded-xl text-sm font-bold transition-all border-2",
+                  aspect === ratio.value 
+                    ? "bg-zinc-900 text-white border-zinc-900" 
+                    : "bg-white text-zinc-500 border-zinc-100 hover:border-zinc-300"
+                )}
+              >
+                {ratio.label}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-medium text-zinc-500">
               <span>Zoom</span>
