@@ -447,11 +447,10 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       {/* ── Masonry grid ── */}
       {filteredOutfits.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 mt-5">
             {col1.map((outfit, i) => renderCard(outfit, i * 3))}
           </div>
-          {/* col2 offset for visual rhythm */}
-          <div className="flex flex-col gap-4 mt-10">
+          <div className="flex flex-col gap-4 mt-5">
             {col2.map((outfit, i) => renderCard(outfit, i * 3 + 1))}
           </div>
           <div className="hidden lg:flex flex-col gap-4 mt-5">
