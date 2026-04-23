@@ -4,8 +4,7 @@ import { Users, Search, X, ChevronRight, Trash2, Heart, MessageSquare, Sparkles 
 import { Outfit, UserProfile } from '../types';
 import { cn } from '../lib/utils';
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
+// Props 
 interface CommunityViewProps {
   communityFilter: 'all' | 'following';
   setCommunityFilter: (filter: 'all' | 'following') => void;
@@ -23,14 +22,11 @@ interface CommunityViewProps {
   outfitsCount: number;
 }
 
-// ─── Canvas size that the Styler uses ─────────────────────────────────────────
+// Canvas size that the Styler uses
 
 const CANVAS_SIZE = 800;
 
-// ─── OutfitCanvas ─────────────────────────────────────────────────────────────
-// Renders outfit items using the same coordinate system as the Styler.
-// If a previewUrl exists it always wins — it's the pixel-perfect snapshot.
-
+// OutfitCanvas 
 const OutfitCanvas: React.FC<{ outfit: Outfit; className?: string }> = ({ outfit, className }) => {
   if (outfit.previewUrl) {
     return (
@@ -48,13 +44,7 @@ const OutfitCanvas: React.FC<{ outfit: Outfit; className?: string }> = ({ outfit
       className={cn('relative w-full h-full overflow-hidden', className)}
       style={{ backgroundColor: outfit.backgroundColor || '#f4f4f5' }}
     >
-      {/*
-       * Inner div is always CANVAS_SIZE × CANVAS_SIZE.
-       * We use a scale-wrapper approach: the inner div is 800×800 and we scale
-       * it to the container width via inline CSS custom property set by JS.
-       * Because the container is `position: relative; overflow: hidden` and the
-       * inner div uses `transformOrigin: top left`, items stay correctly positioned.
-       */}
+      {/*canvas*/}
       <ScaledCanvas outfit={outfit} />
     </div>
   );
@@ -114,7 +104,7 @@ const ScaledCanvas: React.FC<{ outfit: Outfit }> = ({ outfit }) => {
   );
 };
 
-// ─── Aspect ratio helper ───────────────────────────────────────────────────────
+//  Aspect ratio helper
 
 function getAspectClass(outfit: Outfit, idx: number): string {
   if (outfit.cardSize === 'small') return 'aspect-[4/3]';
@@ -126,7 +116,7 @@ function getAspectClass(outfit: Outfit, idx: number): string {
   return 'aspect-square';
 }
 
-// ─── CommunityView ─────────────────────────────────────────────────────────────
+//  CommunityView 
 
 export const CommunityView: React.FC<CommunityViewProps> = ({
   communityFilter,
@@ -181,7 +171,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
           )}
           style={{ backgroundColor: outfit.backgroundColor || '#f4f4f5' }}
         >
-          {/* ── Image area ── */}
+          {/* Image area */}
           <div className={cn('relative overflow-hidden', aspectClass)}>
             <OutfitCanvas
               outfit={outfit}
@@ -272,8 +262,8 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
             </div>
           </div>
 
-          {/* ── Card footer ── */}
-          <div className="px-4 py-3 flex items-center justify-between bg-card border-t border-border">
+          {/*  Card footer */}
+          <div className="px-4 py-3 flex items-center justify-between bg-[#70ACDE]/20 dark:bg-[#0A2647] border-t border-border">
             <div className="flex items-center gap-3 text-text-muted text-xs font-semibold">
               <span className={cn('flex items-center gap-1', isLiked && 'text-red-500')}>
                 <Heart size={11} fill={isLiked ? 'currentColor' : 'none'} />
@@ -320,7 +310,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       exit={{ opacity: 0, x: -20 }}
       className="space-y-8"
     >
-      {/* ── Hero Banner ── */}
+      {/*  Hero Banner  */}
       <div className="relative rounded-[2.5rem] overflow-hidden bg-[#70ACDE] dark:bg-[#0A2647] border-2 border-primary dark:border-[#70ACDE]" style={{ minHeight: 200 }}>
         <div
           className="absolute inset-0 opacity-[0.10]"
@@ -388,7 +378,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
         </div>
       </div>
 
-      {/* ── User search results ── */}
+      {/*  User search results  */}
       <AnimatePresence>
         {userSearchQuery.trim() !== '' && !isSearchingUsers && userSearchResults.length === 0 && (
           <motion.div
@@ -444,7 +434,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ── Masonry grid ── */}
+      {/*  Masonry grid  */}
       {filteredOutfits.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           <div className="flex flex-col gap-4 mt-5">

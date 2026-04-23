@@ -14,7 +14,18 @@ import {
   getDoc
 } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingBag, Plus, X, Tag, DollarSign, Search, Trash2, ExternalLink, Star, Camera } from 'lucide-react';
+import { ShoppingBag, Plus, X, Tag, DollarSign, Search, Trash2, ExternalLink, Star, Camera, User as UserIcon, Package, ChevronRight, Sparkles, RefreshCw, Heart, Recycle, AlertTriangle } from 'lucide-react';
+
+const ITEM_CONDITIONS = [
+  { value: 'Brand New',   label: 'Brand New',   emoji: '✨', description: 'Never worn, tags on',         color: 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700' },
+  { value: 'Like New',    label: 'Like New',     emoji: '🌟', description: 'Worn once or twice',          color: 'text-sky-600 bg-sky-50 border-sky-200 dark:bg-sky-900/20 dark:border-sky-700' },
+  { value: 'Thrifted',    label: 'Thrifted',     emoji: '♻️', description: 'Pre-loved, found at thrift',  color: 'text-violet-600 bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700' },
+  { value: 'Second Hand', label: 'Second Hand',  emoji: '🤝', description: 'Used, good condition',        color: 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700' },
+  { value: 'Well Loved',  label: 'Well Loved',   emoji: '💛', description: 'Visible wear, charming',      color: 'text-orange-600 bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-700' },
+  { value: 'For Parts',   label: 'For Parts',    emoji: '🔧', description: 'Damaged, sold as-is',         color: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700' },
+] as const;
+
+type ItemCondition = typeof ITEM_CONDITIONS[number]['value'];
 import { Listing, UserTier } from '../types';
 import { compressImage } from '../utils/image';
 import { cn } from '../utils/cn';
@@ -30,6 +41,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newListing, setNewListing] = useState({
     title: '',
@@ -54,7 +66,6 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
   const handlePostListing = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Fetch current seller rating to include in listing
       const sellerDoc = await getDoc(doc(db, 'users', user.uid));
       const sellerData = sellerDoc.exists() ? sellerDoc.data() : {};
 
@@ -92,10 +103,18 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
     }
   };
 
+  const handleAddToCartFromDetail = (listing: Listing) => {
+    onAddToCart(listing);
+    setSelectedListing(null);
+  };
+
   const filteredListings = listings.filter(l => 
     l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getCondition = (value: string) =>
+    ITEM_CONDITIONS.find(c => c.value === value) ?? ITEM_CONDITIONS[0];
 
   return (
     <div className="space-y-12">
@@ -159,7 +178,8 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
             <motion.div 
               layout
               key={listing.id}
-              className="group bg-card rounded-[2.5rem] border border-border overflow-hidden hover:shadow-2xl transition-all duration-500"
+              className="group bg-card rounded-[2.5rem] border border-border overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer"
+              onClick={() => setSelectedListing(listing)}
             >
               <div className="aspect-[4/5] relative overflow-hidden">
                 <img 
@@ -172,14 +192,12 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                     {listing.category}
                   </span>
                 </div>
+                {/* Hover overlay: show "View Details" cue */}
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => onAddToCart(listing)}
-                    className="bg-card text-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform shadow-xl"
-                  >
-                    <ShoppingBag size={18} />
-                    Add to Cart
-                  </button>
+                  <div className="bg-card text-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl">
+                    <ExternalLink size={16} />
+                    View Details
+                  </div>
                 </div>
               </div>
               <div className="p-6 space-y-3">
@@ -202,27 +220,15 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={12} 
-                        className={cn(
-                          "transition-colors",
-                          i < (typeof listing.qualityRating === 'number' ? listing.qualityRating : 5) 
-                            ? "text-amber-400 fill-amber-400" 
-                            : "text-zinc-200"
-                        )} 
-                      />
-                    ))}
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                    {typeof listing.qualityRating === 'string' ? listing.qualityRating : 'Condition'}
-                  </span>
+                  {(() => { const c = getCondition(typeof listing.qualityRating === 'string' ? listing.qualityRating : 'Brand New'); return (
+                    <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border', c.color)}>
+                      <span>{c.emoji}</span>{c.label}
+                    </span>
+                  ); })()}
                 </div>
                 {listing.sellerId === user.uid && (
                   <button 
-                    onClick={() => handleDeleteListing(listing.id)}
+                    onClick={(e) => { e.stopPropagation(); handleDeleteListing(listing.id); }}
                     className="w-full mt-2 py-2 text-xs font-bold text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Trash2 size={14} />
@@ -245,6 +251,133 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
         )}
       </div>
 
+      {/* ── Item Detail Popup ── */}
+      <AnimatePresence>
+        {selectedListing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedListing(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.93, y: 24, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.93, y: 24, opacity: 0 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+              className="bg-card rounded-[2rem] max-w-lg w-full shadow-2xl relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Accent bar */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary via-orange to-primary" />
+
+              <div className="flex flex-col sm:flex-row">
+                {/* Image panel */}
+                <div className="sm:w-[38%] aspect-[4/5] sm:aspect-auto relative flex-shrink-0 overflow-hidden rounded-t-[2rem] sm:rounded-l-[2rem] sm:rounded-tr-none">
+                  <img
+                    src={selectedListing.imageUrl}
+                    alt={selectedListing.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Category badge */}
+                  <span className="absolute top-3 left-3 bg-card/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-primary shadow-sm border border-border">
+                    {selectedListing.category}
+                  </span>
+                </div>
+
+                {/* Content panel */}
+                <div className="flex-1 p-5 flex flex-col gap-3.5">
+                  {/* Close button */}
+                  <div className="flex justify-end -mt-1 -mr-1">
+                    <button
+                      onClick={() => setSelectedListing(null)}
+                      className="p-1.5 hover:bg-card-hover rounded-full transition-colors text-text-muted hover:text-text"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Title & price */}
+                  <div className="space-y-0.5">
+                    <h3 className="text-lg font-heading text-primary leading-tight">{selectedListing.title}</h3>
+                    <p className="text-2xl font-heading text-primary/90">${selectedListing.price.toFixed(2)}</p>
+                  </div>
+
+                  {/* Condition */}
+                  {(() => { const c = getCondition(typeof selectedListing.qualityRating === 'string' ? selectedListing.qualityRating : 'Brand New'); return (
+                    <div className={cn('flex items-center gap-2.5 p-2.5 rounded-xl border', c.color)}>
+                      <span className="text-lg leading-none">{c.emoji}</span>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Condition</p>
+                        <p className="font-bold text-xs">{c.label} <span className="font-normal opacity-70">— {c.description}</span></p>
+                      </div>
+                    </div>
+                  ); })()}
+
+                  {/* Description */}
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">About this item</p>
+                    <p className="text-xs text-text leading-relaxed">
+                      {selectedListing.description || 'No description provided.'}
+                    </p>
+                  </div>
+
+                  {/* Seller info */}
+                  <div className="flex items-center gap-2.5 p-2.5 bg-card-hover rounded-xl border border-border">
+                    <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                      <UserIcon size={16} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-text-muted">Sold by</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-text truncate">{selectedListing.sellerName}</p>
+                        {selectedListing.sellerTier === 'premium' && (
+                          <Star size={11} className="text-amber-400 fill-amber-400 flex-shrink-0" />
+                        )}
+                      </div>
+                    </div>
+                    {selectedListing.sellerRating !== undefined && (
+                      <div className="flex items-center gap-1 text-amber-500 font-bold text-sm flex-shrink-0">
+                        <Star size={13} fill="currentColor" />
+                        {selectedListing.sellerRating.toFixed(1)}
+                        {selectedListing.sellerReviewCount > 0 && (
+                          <span className="text-text-muted text-xs font-normal">
+                            ({selectedListing.sellerReviewCount})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-2 mt-auto pt-1">
+                    {selectedListing.sellerId !== user.uid ? (
+                      <button
+                        onClick={() => handleAddToCartFromDetail(selectedListing)}
+                        className="w-full bg-primary text-bg py-3 rounded-xl font-heading text-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-lg retro-shadow-pink"
+                      >
+                        <ShoppingBag size={17} />
+                        Add to Cart
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { setSelectedListing(null); handleDeleteListing(selectedListing.id); }}
+                        className="w-full py-3 text-xs font-bold text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors flex items-center justify-center gap-2 border border-red-200"
+                      >
+                        <Trash2 size={14} />
+                        Remove My Listing
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Post Listing Popup ── */}
       <AnimatePresence>
         {isPosting && (
           <motion.div 
@@ -258,51 +391,51 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-card rounded-[2.5rem] p-8 max-w-lg w-full shadow-2xl relative overflow-hidden"
+              className="bg-card rounded-2xl p-5 max-w-sm w-full shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-orange" />
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-3xl font-heading text-primary">Sell an Item</h3>
-                <button onClick={() => setIsPosting(false)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-                  <X size={24} />
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-orange" />
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-heading text-primary">Sell an Item</h3>
+                <button onClick={() => setIsPosting(false)} className="p-1.5 hover:bg-zinc-100 rounded-full transition-colors">
+                  <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handlePostListing} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Title</label>
+              <form onSubmit={handlePostListing} className="space-y-3">
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Title</label>
                       <input 
                         required
                         type="text"
                         value={newListing.title}
                         onChange={(e) => setNewListing({ ...newListing, title: e.target.value })}
-                        className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full bg-card-hover border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="Vintage Denim Jacket"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Price ($)</label>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Price ($)</label>
                       <input 
                         required
                         type="number"
                         value={newListing.price}
                         onChange={(e) => setNewListing({ ...newListing, price: e.target.value })}
-                        className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        className="w-full bg-card-hover border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         placeholder="45"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Category</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Category</label>
                     <select 
                       required
                       value={newListing.category}
                       onChange={(e) => setNewListing({ ...newListing, category: e.target.value })}
-                      className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
+                      className="w-full bg-card-hover border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                     >
                       <option value="">Select Category</option>
                       <option value="Tops">Tops</option>
@@ -324,10 +457,34 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Item Condition</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ITEM_CONDITIONS.map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          onClick={() => setNewListing({ ...newListing, qualityRating: c.value })}
+                          className={cn(
+                            'flex items-start gap-2.5 px-3.5 py-3 rounded-2xl border-2 text-left transition-all',
+                            newListing.qualityRating === c.value
+                              ? cn(c.color, 'border-current scale-[1.02] shadow-sm')
+                              : 'bg-card-hover border-border hover:border-primary/30 text-text'
+                          )}
+                        >
+                          <span className="text-xl leading-none mt-0.5">{c.emoji}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold leading-tight">{c.label}</p>
+                            <p className="text-[10px] opacity-60 leading-tight mt-0.5 truncate">{c.description}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-widest text-text-muted ml-1">Image URL</label>
                     <div className="flex gap-2">
-                      <input 
+                      <input
                         required
                         type="url"
                         value={newListing.imageUrl}
@@ -337,10 +494,10 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                       />
                       <label className="bg-zinc-100 p-3 rounded-2xl cursor-pointer hover:bg-zinc-200 transition-colors">
                         <Camera size={24} className="text-zinc-500" />
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -351,7 +508,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
                               };
                               reader.readAsDataURL(file);
                             }
-                          }} 
+                          }}
                         />
                       </label>
                     </div>
@@ -360,7 +517,7 @@ export const Marketplace = ({ user, userTier, onAddToCart, onDeleteItem }: Marke
 
                 <button 
                   type="submit"
-                  className="w-full bg-primary text-bg py-5 rounded-2xl font-heading text-2xl hover:scale-[1.02] transition-all shadow-xl retro-shadow-pink"
+                  className="w-full bg-primary text-bg py-5 rounded-full font-heading text-2xl hover:scale-[1.02] transition-all shadow-xl retro-shadow-pink"
                 >
                   Post Listing
                 </button>

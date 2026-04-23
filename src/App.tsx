@@ -2315,7 +2315,7 @@ export default function App() {
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="bg-bg border-4 border-primary/20 rounded-[4rem] overflow-hidden max-w-6xl w-full flex flex-col md:flex-row shadow-2xl relative h-[90vh]"
+                    className="bg-card border-2 border-[#70ACDE] rounded-4xl overflow-hidden max-w-6xl w-full flex flex-col md:flex-row shadow-2xl relative h-[90vh]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div
@@ -2323,7 +2323,7 @@ export default function App() {
                       style={{
                         backgroundColor: (() => {
                           const o = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
-                          return o?.backgroundColor || '#111110';
+                          return o?.backgroundColor || 'var(--card)';
                         })()
                       }}
                     >
@@ -2379,15 +2379,15 @@ export default function App() {
                             const o = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
                             if (o) downloadOutfit(o);
                           }}
-                          className="absolute bottom-8 right-8 p-5 bg-white/90 backdrop-blur-md text-primary rounded-[2rem] shadow-2xl hover:scale-110 active:scale-95 transition-all z-10"
+                          className="absolute bottom-8 right-8 p-5 bg-card/90 backdrop-blur-md text-primary rounded-[2rem] shadow-2xl hover:scale-110 active:scale-95 transition-all z-10 border border-border"
                         >
                           <Download size={28} />
                         </button>
                       )}
                     </div>
 
-                    <div className="md:w-2/5 flex flex-col h-full bg-[#111110] text-[#E9E3FF]">
-                      <div className="p-8 border-b border-white/10 space-y-6">
+                    <div className="md:w-2/5 flex flex-col h-full bg-card text-text border-l border-border transition-colors">
+                      <div className="p-8 border-b border-border space-y-6">
                         <div className="flex justify-between items-start">
                           {(() => {
                             const currentObject = viewingOutfit || temporaryOutfit || outfits.find(o => o.id === viewingComments?.id);
@@ -2404,22 +2404,22 @@ export default function App() {
                               >
                                 <img
                                   src={(currentObject.authorId === user?.uid ? user.photoURL : currentObject.authorPhoto) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentObject.authorId}`}
-                                  className="w-14 h-14 rounded-full border-2 border-white/20 shadow-xl group-hover/author:scale-105 transition-transform"
+                                  className="w-14 h-14 rounded-full border-2 border-primary/20 shadow-xl group-hover/author:scale-105 transition-transform"
                                   alt="Author"
                                   referrerPolicy="no-referrer"
                                 />
                                 <div className="text-left">
-                                  <p className="font-heading text-xl text-white leading-tight">
+                                  <p className="font-heading text-xl text-text leading-tight">
                                     {currentObject.authorId === user?.uid ? (user.displayName || currentObject.authorName) : currentObject.authorName}
                                   </p>
-                                  <p className="text-[10px] text-primary/50 font-bold uppercase tracking-[0.2em]">Verified Stylist</p>
+                                  <p className="text-[10px] text-primary font-bold uppercase tracking-[0.2em]">Verified Stylist</p>
                                 </div>
                               </button>
                             );
                           })()}
                           <button
                             onClick={(e) => { e.stopPropagation(); setViewingOutfit(null); setViewingComments(null); }}
-                            className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-white/50 transition-all"
+                            className="w-10 h-10 flex items-center justify-center bg-card-hover border border-border hover:border-[#70ACDE] rounded-full text-text-muted transition-all"
                           >
                             <X size={24} />
                           </button>
@@ -2437,7 +2437,7 @@ export default function App() {
                                 onClick={() => handleToggleFavorite(currentId)}
                                 className={cn(
                                   "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg",
-                                  isLiked ? "bg-red-500 text-white" : "bg-white/5 text-white/50 hover:bg-white/10 border border-white/10"
+                                  isLiked ? "bg-red-500 text-white" : "bg-card-hover text-text-muted hover:text-red-500 border border-border"
                                 )}
                               >
                                 <Heart size={20} fill={isLiked ? "currentColor" : "none"} />
@@ -2446,7 +2446,7 @@ export default function App() {
                             );
                           })()}
 
-                          <div className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-white/5 text-white/50 border border-white/10 shadow-lg">
+                          <div className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-card-hover text-text-muted border border-border shadow-lg">
                             <MessageSquare size={20} />
                             <span className="text-sm">
                               {viewingOutfit?.commentsCount || temporaryOutfit?.commentsCount || outfits.find(o => o.id === viewingComments?.id)?.commentsCount || 0}

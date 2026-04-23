@@ -128,7 +128,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       {!isIntegrated && (
         <div className="p-6 border-b border-border flex items-center justify-between bg-card-hover/50">
           <div className="flex items-center gap-2">
-            <MessageSquare className="text-emerald-500" size={20} />
+            <MessageSquare className="text-primary" size={20} />
             <h3 className="font-bold text-lg text-text">Comments ({comments.length})</h3>
           </div>
           <button 
@@ -146,7 +146,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
       )}>
         {loading ? (
           <div className="flex items-center justify-center h-full py-20">
-            <Loader2 className="animate-spin text-emerald-500" size={32} />
+            <Loader2 className="animate-spin text-primary" size={32} />
           </div>
         ) : comments.length > 0 ? (
           <div className="space-y-6">
@@ -216,15 +216,15 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             className={cn(
-              "w-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-text",
-              isIntegrated ? "rounded-[1.5rem] px-8 py-5 text-base" : "rounded-2xl pl-6 pr-14 py-4 text-sm"
+              "w-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/20 transition-all text-text",
+              isIntegrated ? "rounded-full px-7 py-4 text-base" : "rounded-full pl-6 pr-14 py-4 text-sm"
             )}
           />
           <button
             type="submit"
             disabled={!newComment.trim() || submitting}
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:opacity-50 disabled:hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center",
+              "absolute top-1/2 -translate-y-1/2 bg-primary text-white rounded-full hover:bg-emerald-600 disabled:opacity-50 disabled:hover:bg-primary transition-all shadow-lg shadow-primary/20 flex items-center justify-center",
               isIntegrated ? "right-3 w-12 h-12" : "right-2 p-3"
             )}
           >
