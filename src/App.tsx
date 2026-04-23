@@ -938,7 +938,7 @@ export default function App() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <RefreshCw className="animate-spin text-emerald-500" size={32} />
+      <RefreshCw className="animate-spin text-primary" size={32} />
     </div>
   );
 
@@ -1268,7 +1268,7 @@ export default function App() {
                                 onClick={() => setIsPublicRecommendation(!isPublicRecommendation)}
                                 className={cn(
                                   "w-10 h-5 rounded-full transition-colors relative",
-                                  isPublicRecommendation ? "bg-emerald-500" : "bg-zinc-200"
+                                  isPublicRecommendation ? "bg-primary" : "bg-zinc-200"
                                 )}
                               >
                                 <motion.div
@@ -2262,7 +2262,7 @@ export default function App() {
 
                       {checkoutStep === "success" && (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-10">
-                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-100">
                             <CheckCircle2 size={40} />
                           </motion.div>
                           <div className="space-y-2">

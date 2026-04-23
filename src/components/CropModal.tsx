@@ -113,7 +113,7 @@ export const CropModal: React.FC<CropModalProps> = ({ image, onCropComplete, onC
               aria-labelledby="Zoom"
               onChange={(e) => setZoom(Number(e.target.value))}
               disabled={isProcessing}
-              className="w-full h-2 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-emerald-500 disabled:opacity-50"
+              className="w-full h-2 bg-zinc-100 rounded-lg appearance-none cursor-pointer accent-primary disabled:opacity-50"
             />
           </div>
 
