@@ -29,10 +29,10 @@ export const ContactView = () => {
             <p className="text-dark/50 font-medium">For support, feedback, or general inquiries.</p>
           </div>
           <a 
-            href="mailto:customerservice.rethriva@gmail.com" 
+            href="mailto:rethriva.support@gmail.com" 
             className="block text-xl font-bold text-primary hover:text-orange transition-colors"
           >
-            customerservice.rethriva@gmail.com
+            rethriva.support@gmail.com
           </a>
         </motion.div>
 
@@ -48,10 +48,10 @@ export const ContactView = () => {
             <p className="text-dark/50 font-medium">For business inquiries and partnerships.</p>
           </div>
           <a 
-            href="mailto:rethirva@gmail.com" 
+            href="mailto:rethriva.co@gmail.com" 
             className="block text-xl font-bold text-primary hover:text-pink transition-colors"
           >
-            rethirva@gmail.com
+            rethriva.co@gmail.com
           </a>
         </motion.div>
       </div>
@@ -72,7 +72,7 @@ export const ContactView = () => {
           </p>
           <div className="pt-4">
             <a 
-              href="https://rethriva-team.example.com" 
+              href="https://rethriva.vercel.app/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-10 py-5 bg-bg text-primary font-heading text-2xl rounded-3xl hover:scale-105 transition-all shadow-2xl group"
