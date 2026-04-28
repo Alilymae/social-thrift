@@ -5,8 +5,9 @@ let aiInstance: GoogleGenAI | null = null;
 function getAI() {
   if (!aiInstance) {
     // Correct API Key access for Gemini as per platform requirements
-    const apiKey = process.env.GEMINI_API_KEY;
-    
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    console.log("API key loaded:", !!apiKey, apiKey?.slice(0, 8));
+
     if (!apiKey) {
       console.error("Gemini API Key is missing. Ensure it is set in the Settings menu.");
       throw new Error("Gemini API Key is missing. Please check your AI Studio Settings.");
@@ -57,9 +58,9 @@ export async function getMixAndMatchSuggestions(garments: any[]) {
   try {
     const ai = getAI();
     const garmentDescriptions = garments.map(g => `${g.category} (${g.tags?.join(', ') || 'no tags'})`).join(', ');
-    
+
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash-preview",
       contents: `I have these items in my wardrobe: ${garmentDescriptions}. Suggest 3 unique outfit combinations I can make with them. Focus on creative and trendy styling.`
     });
 
@@ -100,7 +101,7 @@ export async function getSummary(analysis: string) {
 export async function generateStyleVisual(prompt: string, originalImage: string) {
   try {
     const ai = getAI();
-    
+
     // Using gemini-2.5-flash-image for image-to-image generation to maintain likeness
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -130,7 +131,7 @@ export async function generateStyleVisual(prompt: string, originalImage: string)
     throw new Error("Gemini did not return an image part.");
   } catch (error: any) {
     console.error("Gemini Visual Generation Error:", error);
-    
+
     // Fallback to Pollinations if Gemini fails
     const pollinationsPrompt = encodeURIComponent(`professional fashion photography, high-end editorial look, ${prompt}, aesthetic, trendy, 8k resolution, highly detailed`);
     const seed = Math.floor(Math.random() * 1000000);
