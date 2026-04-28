@@ -70,6 +70,7 @@ import {
   LogOut,
   CheckCircle2,
   CreditCard,
+  DollarSign,
   Layers,
   Palette,
   ArrowUpRight,
@@ -258,7 +259,12 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "payment" | "success">("cart");
+
+  // Payment States
   const [paymentData, setPaymentData] = useState({ cardNumber: "", expiry: "", cvc: "", name: "" });
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
+  const [cashData, setCashData] = useState({ name: "", phone: "", address: "" });
+
   const [ratingTarget, setRatingTarget] = useState<{ orderId: string; sellerId: string; sellerName: string } | null>(null);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [userSearchResults, setUserSearchResults] = useState<UserProfile[]>([]);
@@ -539,6 +545,8 @@ export default function App() {
           price: item.price,
           imageUrl: item.imageUrl,
           status: "completed",
+          paymentMethod: paymentMethod,
+          ...(paymentMethod === 'cash' ? { deliveryDetails: cashData } : {}),
           createdAt: serverTimestamp()
         };
 
@@ -1634,11 +1642,13 @@ export default function App() {
                                 ) : (
                                   <div className="flex flex-wrap gap-2">
                                     {selectedGarment.tags.length > 0 ? (
-                                      selectedGarment.tags.map((tag, i) => (
-                                        <span key={`${tag}-${i}`} className="px-4 py-1.5 bg-cream-support dark:bg-[#FFD7E1] text-primary dark:text-text rounded-full text-xs font-bold border border-primary/50 dark:border-cream-support/50">
-                                          #{tag}
-                                        </span>
-                                      ))
+                                      selectedGarment.tags.length > 0 ? (
+                                        selectedGarment.tags.map((tag, i) => (
+                                          <span key={`${tag}-${i}`} className="px-4 py-1.5 bg-cream-support dark:bg-[#FFD7E1] text-primary dark:text-text rounded-full text-xs font-bold border border-primary/50 dark:border-cream-support/50">
+                                            #{tag}
+                                          </span>
+                                        ))
+                                      ) : null
                                     ) : (
                                       <p className="text-primary/50 dark:text-cream-support/50 text-sm italic">No tags added yet.</p>
                                     )}
@@ -2218,50 +2228,138 @@ export default function App() {
 
                       {checkoutStep === "payment" && (
                         <div className="space-y-8 py-4">
-                          <div className="bg-zinc-900 text-white p-6 rounded-3xl space-y-8 shadow-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
-                            <div className="flex justify-between items-start">
-                              <div className="w-12 h-8 bg-amber-400/20 rounded-md border border-amber-400/30" />
-                              <CreditCard size={24} className="opacity-50" />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Number</p>
-                              <p className="text-xl font-mono tracking-widest">
-                                {paymentData.cardNumber ? paymentData.cardNumber.replace(/(\d{4})/g, "$1 ").trim() : "•••• •••• •••• ••••"}
-                              </p>
-                            </div>
-                            <div className="flex justify-between items-end">
-                              <div className="space-y-1">
-                                <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Holder</p>
-                                <p className="text-sm font-bold uppercase tracking-wider">{paymentData.name || "Your Name"}</p>
-                              </div>
-                              <div className="space-y-1 text-right">
-                                <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Expires</p>
-                                <p className="text-sm font-bold">{paymentData.expiry || "MM/YY"}</p>
-                              </div>
-                            </div>
-                          </div>
 
-                          <div className="space-y-4">
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Cardholder Name</label>
-                              <input type="text" value={paymentData.name} onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text" placeholder="JOHN DOE" />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Card Number</label>
-                              <input type="text" maxLength={16} value={paymentData.cardNumber} onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="0000 0000 0000 0000" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Expiry Date</label>
-                                <input type="text" maxLength={5} value={paymentData.expiry} onChange={(e) => { let val = e.target.value.replace(/\D/g, ""); if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2); setPaymentData({ ...paymentData, expiry: val }); }} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="MM/YY" />
+                          {/* --- PAYMENT METHOD UI --- */}
+                          <div className="space-y-3 mb-8">
+                            <p className="text-sm font-bold uppercase tracking-widest text-text-muted">Payment Method</p>
+
+                            <label className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border bg-card-hover'}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === 'card' ? 'bg-primary text-bg' : 'bg-zinc-200 text-zinc-500'}`}>
+                                  <CreditCard size={20} />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-text">Credit / Debit Card</p>
+                                  <p className="text-xs text-text-muted">Pay securely online</p>
+                                </div>
                               </div>
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">CVC</label>
-                                <input type="text" maxLength={3} value={paymentData.cvc} onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="000" />
+                              <input
+                                type="radio"
+                                name="payment"
+                                value="card"
+                                checked={paymentMethod === 'card'}
+                                onChange={() => setPaymentMethod('card')}
+                                className="w-5 h-5 accent-primary"
+                              />
+                            </label>
+
+                            <label className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-border bg-card-hover'}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === 'cash' ? 'bg-emerald-500 text-white' : 'bg-zinc-200 text-zinc-500'}`}>
+                                  <DollarSign size={20} />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-text">Pay by Cash</p>
+                                  <p className="text-xs text-text-muted">Cash on Delivery or meetup</p>
+                                </div>
                               </div>
-                            </div>
+                              <input
+                                type="radio"
+                                name="payment"
+                                value="cash"
+                                checked={paymentMethod === 'cash'}
+                                onChange={() => setPaymentMethod('cash')}
+                                className="w-5 h-5 accent-primary"
+                              />
+                            </label>
                           </div>
+                          {/* --- END PAYMENT METHOD UI --- */}
+
+                          {/* --- EXISTING CARD UI --- */}
+                          {paymentMethod === 'card' && (
+                            <>
+                              <div className="bg-zinc-900 text-white p-6 rounded-3xl space-y-8 shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16" />
+                                <div className="flex justify-between items-start relative z-10">
+                                  <div className="w-12 h-8 bg-amber-400/20 rounded-md border border-amber-400/30" />
+                                  <CreditCard size={24} className="opacity-50" />
+                                </div>
+                                <div className="space-y-1 relative z-10">
+                                  <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Number</p>
+                                  <p className="text-xl font-mono tracking-widest">
+                                    {paymentData.cardNumber ? paymentData.cardNumber.replace(/(\d{4})/g, "$1 ").trim() : "•••• •••• •••• ••••"}
+                                  </p>
+                                </div>
+                                <div className="flex justify-between items-end relative z-10">
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Card Holder</p>
+                                    <p className="text-sm font-bold uppercase tracking-wider">{paymentData.name || "Your Name"}</p>
+                                  </div>
+                                  <div className="space-y-1 text-right">
+                                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-50">Expires</p>
+                                    <p className="text-sm font-bold">{paymentData.expiry || "MM/YY"}</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Cardholder Name</label>
+                                  <input type="text" value={paymentData.name} onChange={(e) => setPaymentData({ ...paymentData, name: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text" placeholder="Full Name" />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Card Number</label>
+                                  <input type="text" maxLength={16} value={paymentData.cardNumber} onChange={(e) => setPaymentData({ ...paymentData, cardNumber: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="0000 0000 0000 0000" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Expiry Date</label>
+                                    <input type="text" maxLength={5} value={paymentData.expiry} onChange={(e) => { let val = e.target.value.replace(/\D/g, ""); if (val.length > 2) val = val.slice(0, 2) + "/" + val.slice(2); setPaymentData({ ...paymentData, expiry: val }); }} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="MM/YY" />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">CVC</label>
+                                    <input type="text" maxLength={3} value={paymentData.cvc} onChange={(e) => setPaymentData({ ...paymentData, cvc: e.target.value.replace(/\D/g, "") })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="000" />
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {/* --- NEW CASH FORM UI --- */}
+                          {paymentMethod === 'cash' && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                              <div className="bg-emerald-500/10 text-emerald-600 p-6 rounded-3xl space-y-2 border border-emerald-500/20 shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16" />
+                                <div className="flex justify-between items-start relative z-10">
+                                  <div className="w-12 h-8 bg-emerald-500/20 rounded-md border border-emerald-500/30 flex items-center justify-center">
+                                    <DollarSign size={16} />
+                                  </div>
+                                  <Package size={24} className="opacity-50" />
+                                </div>
+                                <div className="space-y-1 mt-4 relative z-10">
+                                  <p className="text-lg font-bold">Cash on Delivery / Meetup</p>
+                                  <p className="text-xs opacity-80 font-medium leading-relaxed">
+                                    Please provide your contact details. The seller will use this to arrange the delivery or meetup location with you.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Full Name</label>
+                                  <input type="text" value={cashData.name} onChange={(e) => setCashData({ ...cashData, name: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text" placeholder="John Doe" />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Phone Number</label>
+                                  <input type="tel" value={cashData.phone} onChange={(e) => setCashData({ ...cashData, phone: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono text-text" placeholder="+1 234 567 8900" />
+                                </div>
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-text-muted ml-1">Delivery / Meetup Address</label>
+                                  <textarea value={cashData.address} onChange={(e) => setCashData({ ...cashData, address: e.target.value })} className="w-full bg-card-hover border border-border rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text min-h-[80px]" placeholder="123 Main St, Apt 4B..." />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -2294,8 +2392,16 @@ export default function App() {
                         ) : (
                           <div className="flex gap-3">
                             <button onClick={() => setCheckoutStep("cart")} className="flex-1 bg-card text-text-muted py-4 rounded-2xl font-bold border border-border hover:bg-card-hover transition-all">Back</button>
-                            <button onClick={handleCheckout} disabled={isCheckingOut || !paymentData.cardNumber || !paymentData.expiry || !paymentData.cvc} className="flex-[2] bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50">
-                              {isCheckingOut ? <RefreshCw className="animate-spin mx-auto" /> : "Pay Now"}
+                            <button
+                              onClick={handleCheckout}
+                              disabled={
+                                isCheckingOut ||
+                                (paymentMethod === 'card' && (!paymentData.cardNumber || !paymentData.expiry || !paymentData.cvc || !paymentData.name)) ||
+                                (paymentMethod === 'cash' && (!cashData.name || !cashData.phone || !cashData.address))
+                              }
+                              className="flex-[2] bg-zinc-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50"
+                            >
+                              {isCheckingOut ? <RefreshCw className="animate-spin mx-auto" /> : "Confirm Order"}
                             </button>
                           </div>
                         )}
@@ -2568,5 +2674,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
-// i hate typescript but it hates me more
