@@ -809,7 +809,7 @@ export default function App() {
         return;
       }
       const imageToSave = visualRecommendation;
-      const compressedImage = await compressImage(imageToSave, 800, 800, 0.8);
+      const compressedImage = await compressImage(imageToSave, 400, 400, 0.8);
 
       let docRef;
       try {
