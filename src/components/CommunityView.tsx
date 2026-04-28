@@ -4,7 +4,6 @@ import { Users, Search, X, ChevronRight, Trash2, Heart, MessageSquare, Sparkles 
 import { Outfit, UserProfile } from '../types';
 import { cn } from '../lib/utils';
 
-// Props 
 interface CommunityViewProps {
   communityFilter: 'all' | 'following';
   setCommunityFilter: (filter: 'all' | 'following') => void;
@@ -22,11 +21,20 @@ interface CommunityViewProps {
   outfitsCount: number;
 }
 
-// Canvas size that the Styler uses
+const CANVAS_HEIGHT = 800;
 
-const CANVAS_SIZE = 800;
+const CANVAS_WIDTH_MAP: Record<string, number> = {
+  small: 800,
+  medium: 800,
+  large: 533,
+};
 
-// OutfitCanvas 
+const CANVAS_HEIGHT_MAP: Record<string, number> = {
+  small: 600,
+  medium: 800,
+  large: 800,
+};
+
 const OutfitCanvas: React.FC<{ outfit: Outfit; className?: string }> = ({ outfit, className }) => {
   if (outfit.previewUrl) {
     return (
@@ -44,79 +52,83 @@ const OutfitCanvas: React.FC<{ outfit: Outfit; className?: string }> = ({ outfit
       className={cn('relative w-full h-full overflow-hidden', className)}
       style={{ backgroundColor: outfit.backgroundColor || '#f4f4f5' }}
     >
-      {/*canvas*/}
       <ScaledCanvas outfit={outfit} />
     </div>
   );
 };
 
 const ScaledCanvas: React.FC<{ outfit: Outfit }> = ({ outfit }) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  // Measure container on mount + resize
+  const cardSize = outfit.cardSize || 'medium';
+  const canvasWidth = CANVAS_WIDTH_MAP[cardSize] ?? 800;
+  const canvasHeight = CANVAS_HEIGHT_MAP[cardSize] ?? 800;
+
   React.useEffect(() => {
-    const el = wrapperRef.current?.parentElement;
+    const el = containerRef.current;
     if (!el) return;
-    const update = () => setScale(el.clientWidth / CANVAS_SIZE);
+    // Scale based on width; height follows naturally from aspect ratio
+    const update = () => {
+      const scaleByWidth = el.clientWidth / canvasWidth;
+      const scaleByHeight = el.clientHeight / canvasHeight;
+      // Use the smaller scale so everything fits without clipping
+      setScale(Math.min(scaleByWidth, scaleByHeight));
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [canvasWidth, canvasHeight]);
 
   return (
-    <div
-      ref={wrapperRef}
-      style={{
-        position: 'absolute',
-        width: CANVAS_SIZE,
-        height: CANVAS_SIZE,
-        transformOrigin: 'top left',
-        transform: `scale(${scale})`,
-      }}
-    >
-      {outfit.items.map((item, i) => {
-        if (!item.imageUrl) return null;
-        const scaleX = item.scaleX !== undefined ? item.scaleX : (item.scale ?? 1);
-        const scaleY = item.scaleY !== undefined ? item.scaleY : (item.scale ?? 1);
-        return (
-          <img
-            key={i}
-            src={item.imageUrl}
-            referrerPolicy="no-referrer"
-            alt="Outfit item"
-            style={{
-              position: 'absolute',
-              left: item.x,
-              top: item.y,
-              width: item.width || 200,
-              height: item.height || 200,
-              transformOrigin: '0 0',
-              transform: `scale(${scaleX}, ${scaleY}) rotate(${item.rotation ?? 0}deg)`,
-              objectFit: 'cover',
-              borderRadius: 4,
-            }}
-          />
-        );
-      })}
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      <div
+        style={{
+          position: 'absolute',
+          width: canvasWidth,
+          height: canvasHeight,
+          transformOrigin: 'top left',
+          transform: `scale(${scale})`,
+        }}
+      >
+        {outfit.items.map((item, i) => {
+          if (!item.imageUrl) return null;
+          const scaleX = item.scaleX !== undefined ? item.scaleX : (item.scale ?? 1);
+          const scaleY = item.scaleY !== undefined ? item.scaleY : (item.scale ?? 1);
+          return (
+            <img
+              key={i}
+              src={item.imageUrl}
+              referrerPolicy="no-referrer"
+              alt="Outfit item"
+              style={{
+                position: 'absolute',
+                left: item.x,
+                top: item.y,
+                width: item.width || 200,
+                height: item.height || 200,
+                transformOrigin: '0 0',
+                transform: `scale(${scaleX}, ${scaleY}) rotate(${item.rotation ?? 0}deg)`,
+                objectFit: 'cover',
+                borderRadius: 4,
+              }}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 };
 
-//  Aspect ratio helper
-
 function getAspectClass(outfit: Outfit, idx: number): string {
   if (outfit.cardSize === 'small') return 'aspect-[4/3]';
   if (outfit.cardSize === 'large') return 'aspect-[2/3]';
-  // Medium / unset: vary for visual rhythm (Pinterest-style)
   const rhythm = idx % 5;
   if (rhythm === 0) return 'aspect-[2/3]';
   if (rhythm === 3) return 'aspect-[4/3]';
   return 'aspect-square';
 }
-
-//  CommunityView 
 
 export const CommunityView: React.FC<CommunityViewProps> = ({
   communityFilter,
@@ -136,7 +148,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Split into 3 columns for manual masonry
   const col1: Outfit[] = [];
   const col2: Outfit[] = [];
   const col3: Outfit[] = [];
@@ -262,7 +273,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
             </div>
           </div>
 
-          {/*  Card footer */}
+          {/* Card footer */}
           <div className="px-4 py-3 flex items-center justify-between bg-[#70ACDE]/20 dark:bg-[#0A2647] border-t border-border">
             <div className="flex items-center gap-3 text-text-muted text-xs font-semibold">
               <span className={cn('flex items-center gap-1', isLiked && 'text-red-500')}>
@@ -275,7 +286,6 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
               </span>
             </div>
 
-            {/* Small avatar shown when not hovered */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -310,7 +320,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
       exit={{ opacity: 0, x: -20 }}
       className="space-y-8"
     >
-      {/*  Hero Banner  */}
+      {/* Hero Banner */}
       <div className="relative rounded-[2.5rem] overflow-hidden bg-[#70ACDE] dark:bg-[#0A2647] border-2 border-primary dark:border-[#70ACDE]" style={{ minHeight: 200 }}>
         <div
           className="absolute inset-0 opacity-[0.10]"
@@ -378,7 +388,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
         </div>
       </div>
 
-      {/*  User search results  */}
+      {/* User search results */}
       <AnimatePresence>
         {userSearchQuery.trim() !== '' && !isSearchingUsers && userSearchResults.length === 0 && (
           <motion.div
@@ -434,7 +444,7 @@ export const CommunityView: React.FC<CommunityViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/*  Masonry grid  */}
+      {/* Masonry grid */}
       {filteredOutfits.length > 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 items-start">
           <div className="flex flex-col gap-4 mt-5">

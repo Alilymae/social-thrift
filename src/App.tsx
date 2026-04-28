@@ -863,10 +863,12 @@ export default function App() {
         }
       });
 
-      const previewUrl = await generateOutfitPreview({
-        items: stylerItems,
-        backgroundColor: stylerBgColor
-      });
+      const previewUrl = await generateOutfitPreview(
+        { items: stylerItems, backgroundColor: stylerBgColor },
+        800,
+        canvasDimensions.width,
+        canvasDimensions.height
+      );
 
       const optimizedItems = stylerItems.map(item => ({
         ...item,
@@ -2450,8 +2452,45 @@ export default function App() {
                         }
 
                         if (currentOutfit.previewUrl) {
-                          return <img src={currentOutfit.previewUrl} className="w-full h-full object-contain" alt="Outfit preview" referrerPolicy="no-referrer" />;
+                          return (
+                            <img
+                              src={currentOutfit.previewUrl}
+                              className="w-full h-full object-contain"
+                              alt="Outfit preview"
+                              referrerPolicy="no-referrer"
+                            />
+                          );
                         }
+
+                        // Fallback: render items directly using saved canvas dimensions
+                        const modalCanvasW = currentOutfit.cardSize === 'large' ? 533 : 800;
+                        const modalCanvasH = currentOutfit.cardSize === 'small' ? 600 : 800;
+
+                        return (
+                          <div className="absolute inset-0" style={{ backgroundColor: currentOutfit.backgroundColor || '#ffffff' }}>
+                            {currentOutfit.items.map((item: any, i: number) =>
+                              item.imageUrl ? (
+                                <img
+                                  key={i}
+                                  src={item.imageUrl}
+                                  referrerPolicy="no-referrer"
+                                  alt="Outfit item"
+                                  style={{
+                                    position: 'absolute',
+                                    left: `${(item.x / modalCanvasW) * 100}%`,
+                                    top: `${(item.y / modalCanvasH) * 100}%`,
+                                    width: `${((item.width || 200) / modalCanvasW) * 100}%`,
+                                    height: `${((item.height || 200) / modalCanvasH) * 100}%`,
+                                    transformOrigin: '0 0',
+                                    transform: `scale(${item.scaleX ?? item.scale ?? 1}, ${item.scaleY ?? item.scale ?? 1}) rotate(${item.rotation ?? 0}deg)`,
+                                    objectFit: 'cover',
+                                    borderRadius: 4,
+                                  }}
+                                />
+                              ) : null
+                            )}
+                          </div>
+                        );
 
                         return (
                           <div className="absolute inset-0" style={{ backgroundColor: currentOutfit.backgroundColor || '#ffffff' }}>

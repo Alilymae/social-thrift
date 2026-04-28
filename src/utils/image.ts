@@ -40,36 +40,41 @@ export const compressImage = (
   });
 };
 
-export const generateOutfitPreview = async (outfit: any, size = 600): Promise<string> => {
+export const generateOutfitPreview = async (
+  outfit: any,
+  size = 800,
+  canvasWidth = 800,
+  canvasHeight = 800
+): Promise<string> => {
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
   ctx.fillStyle = outfit.backgroundColor || '#f4f4f5';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   for (const item of outfit.items) {
+    if (!item.imageUrl) continue;
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = item.imageUrl;
     await new Promise((resolve) => {
       img.onload = () => {
         ctx.save();
-        const sX = (item.scaleX !== undefined ? item.scaleX : item.scale) * (size / 800);
-        const sY = (item.scaleY !== undefined ? item.scaleY : item.scale) * (size / 800);
-        const drawX = (item.x / 800) * size;
-        const drawY = (item.y / 800) * size;
+        const sX = item.scaleX !== undefined ? item.scaleX : (item.scale ?? 1);
+        const sY = item.scaleY !== undefined ? item.scaleY : (item.scale ?? 1);
         const baseWidth = item.width || 200;
         const baseHeight = item.height || 200;
-        
-        ctx.translate(drawX, drawY);
-        ctx.rotate((item.rotation * Math.PI) / 180);
+
+        ctx.translate(item.x, item.y);
+        ctx.rotate(((item.rotation ?? 0) * Math.PI) / 180);
         ctx.scale(sX, sY);
-        
+
         if (item.crop) {
           ctx.drawImage(
-            img, 
+            img,
             item.crop.x, item.crop.y, item.crop.width, item.crop.height,
             0, 0, baseWidth, baseHeight
           );
@@ -83,7 +88,6 @@ export const generateOutfitPreview = async (outfit: any, size = 600): Promise<st
     });
   }
 
-  // REVERTED: Use PNG for outfit previews to ensure transparency/quality in community feed
   return canvas.toDataURL('image/png');
 };
 
