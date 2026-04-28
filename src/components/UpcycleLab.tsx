@@ -417,7 +417,7 @@ export const UpcycleLab = ({ user, initialTag, onViewProfile }: UpcycleLabProps)
             </div>
             <button
               onClick={() => setIsUploading(true)}
-              className="bg-[#8D77AB] dark:bg-pink text-black px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#625476] dark:hover:bg-[#AC3B61] transition-colors"
+              className="bg-primary dark:bg-lavender-support text-cream-support dark:text-dark px-8 py-3 rounded-full retro-shadow-upcycle font-heading text-sm uppercase tracking-widest hover:bg-[#625476] dark:hover:bg-[#AC3B61] transition-colors"
             >
               Share First Tutorial
             </button>

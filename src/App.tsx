@@ -801,15 +801,20 @@ export default function App() {
     setIsSavingRecommendation(true);
     try {
       console.log("Saving recommendation...");
-      const summaryResult = await getSummary(recommendations);
-      console.log("Summary generated:", summaryResult);
+      let summaryResult = "Style recommendation";
+      try {
+        summaryResult = await getSummary(recommendations);
+        console.log("Summary generated:", summaryResult);
+      } catch (err) {
+        console.warn("Summary generation failed, using fallback:", err);
+      }
 
       if (!visualRecommendation) {
         addToast("Please wait for the AI to generate the visual recommendation before saving.", "info");
         return;
       }
       const imageToSave = visualRecommendation;
-      const compressedImage = await compressImage(imageToSave, 400, 400, 0.8);
+      const compressedImage = await compressImage(imageToSave, 400, 400, 0.5);
 
       let docRef;
       try {
