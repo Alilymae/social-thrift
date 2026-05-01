@@ -113,7 +113,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onU
               Best Value
             </span>
             <h3 className="text-5xl font-black text-text mt-4 mb-2">
-              $9.99<span className="text-lg font-medium text-text/40">/mo</span>
+              $4.99<span className="text-lg font-medium text-text/40">/mo</span>
             </h3>
             <p className="text-text/50">Cancel anytime. No hidden fees.</p>
           </div>
